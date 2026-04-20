@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "wa3J-MTNTkflkcWmImZX2"
@@ -24,3 +23,9 @@ id = "lujK3ECbRQGcH6kUfstWe"
 uri = "file://artifacts/pk-store/src/assets/hero.png"
 type = "image"
 title = "Store hero banner"
+
+[[outputs]]
+id = "feqqAWuoCT7IQ7rnjGOAv"
+uri = "file://smartwear-react-app.tar.gz"
+type = "unspecified"
+title = "SmartWear React App - Complete Source Code"
