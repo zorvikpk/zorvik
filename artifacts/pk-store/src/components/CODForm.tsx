@@ -12,7 +12,9 @@ import { STORE_CONFIG } from '../config';
 import { trackInitiateCheckout, trackCompletePayment } from '../lib/tiktok-pixel';
 import { CartItem } from '../hooks/use-cart';
 import { saveOrder, setLastOrderId } from '../lib/orders';
-import { ChevronDown, Clock, Truck, StickyNote, User, Phone, MapPin, X } from 'lucide-react';
+import { applyCouponUsage } from '../data/coupons';
+import { type AppliedCoupon } from './CouponInput';
+import { ChevronDown, Clock, Truck, StickyNote, User, Phone, MapPin, X, Tag } from 'lucide-react';
 
 // ─── Cities with delivery estimates ────────────────────────────────────────────
 const CITIES: { name: string; days: string }[] = [
@@ -66,14 +68,15 @@ type FormValues = z.infer<typeof schema>;
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 interface CODFormProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  items: CartItem[];
+  open:           boolean;
+  onOpenChange:   (open: boolean) => void;
+  items:          CartItem[];
   onOrderSuccess: () => void;
+  appliedCoupon?: AppliedCoupon | null;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
-export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormProps) {
+export function CODForm({ open, onOpenChange, items, onOrderSuccess, appliedCoupon }: CODFormProps) {
   const [, setLocation]   = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notesOpen, setNotesOpen]       = useState(false);
@@ -84,9 +87,16 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
     const price = item.variant?.optionPrice ?? item.product.price;
     return sum + price * item.quantity;
   }, 0);
-  const freeDelivery     = itemTotal >= 2000;
-  const deliveryCharge   = freeDelivery ? 0 : STORE_CONFIG.deliveryCharge;
-  const grandTotal       = itemTotal + deliveryCharge;
+  const freeDelivery   = itemTotal >= 2000;
+  const baseDelivery   = freeDelivery ? 0 : STORE_CONFIG.deliveryCharge;
+  // Apply coupon
+  const isFreeDelivCoupon = appliedCoupon?.coupon.discount_type === 'free_delivery';
+  const effectiveDelivery = appliedCoupon
+    ? Math.min(appliedCoupon.finalDelivery, baseDelivery)
+    : baseDelivery;
+  const itemDiscount  = appliedCoupon && !isFreeDelivCoupon ? appliedCoupon.discount : 0;
+  const deliveryCharge = effectiveDelivery; // alias for clarity below
+  const grandTotal    = itemTotal - itemDiscount + effectiveDelivery;
 
   // ── Form setup ──────────────────────────────────────────────────────────────
   const form = useForm<FormValues>({
@@ -154,7 +164,10 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
       msg += `${i + 1}. ${item.product.name}${parts.length ? ` (${parts.join(', ')})` : ''} × ${item.quantity} — Rs. ${price * item.quantity}\n`;
     });
     msg += `\n*Subtotal:* Rs. ${itemTotal}\n`;
-    msg += `*Delivery:* ${freeDelivery ? 'FREE' : `Rs. ${deliveryCharge}`}\n`;
+    if (appliedCoupon) {
+      msg += `*Coupon:* ${appliedCoupon.code} (−Rs. ${appliedCoupon.discount})\n`;
+    }
+    msg += `*Delivery:* ${effectiveDelivery === 0 ? 'FREE' : `Rs. ${effectiveDelivery}`}\n`;
     msg += `*Total:* Rs. ${grandTotal}\n`;
     msg += `*Payment:* Cash on Delivery\n`;
     msg += `\n_Expected delivery: ${cityInfo?.days ?? '3-5 days'}_`;
@@ -197,8 +210,13 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
     });
     setLastOrderId(orderId);
 
+    // Track coupon usage in localStorage
+    if (appliedCoupon) {
+      applyCouponUsage(appliedCoupon.code);
+    }
+
     setIsSubmitting(false);
-    onOrderSuccess();        // clear cart
+    onOrderSuccess();        // clear cart + coupon
     onOpenChange(false);     // close dialog
     setLocation('/order-confirmation'); // navigate to full page
   };
@@ -264,16 +282,30 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
                 <span>Subtotal</span>
                 <span>Rs. {itemTotal}</span>
               </div>
+
+              {/* Coupon discount row */}
+              {appliedCoupon && (
+                <div className="flex justify-between text-xs items-center">
+                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-bold">
+                    <Tag size={10} />
+                    {appliedCoupon.code}
+                  </span>
+                  <span className="text-green-600 dark:text-green-400 font-black">
+                    −Rs. {appliedCoupon.discount}
+                  </span>
+                </div>
+              )}
+
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Truck size={11} /> Delivery
                 </span>
-                {freeDelivery
+                {effectiveDelivery === 0
                   ? <span className="text-green-600 dark:text-green-400 font-bold">FREE</span>
-                  : <span>Rs. {deliveryCharge}</span>
+                  : <span>Rs. {effectiveDelivery}</span>
                 }
               </div>
-              {freeDelivery && (
+              {freeDelivery && !appliedCoupon && (
                 <p className="text-[10px] text-green-600 dark:text-green-400">
                   Free delivery on orders above Rs. 2,000
                 </p>
@@ -282,6 +314,11 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
                 <span>Total</span>
                 <span className="text-primary">Rs. {grandTotal}</span>
               </div>
+              {appliedCoupon && (
+                <p className="text-[10px] text-green-600 dark:text-green-400 text-right font-bold">
+                  You're saving Rs. {appliedCoupon.discount}! 🎉
+                </p>
+              )}
             </div>
           </div>
 

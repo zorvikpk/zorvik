@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ShoppingBag, Search, Menu, X } from 'lucide-react';
 import { useCart } from '../hooks/use-cart';
 import { STORE_CONFIG } from '../config';
 import { StoreLogo } from './StoreLogo';
+
+const ANNOUNCEMENTS = [
+  '🎉 Use code FIRST10 for 10% off your first order!',
+  `Free Delivery on orders over Rs. 2,000 — COD Available`,
+  '💸 Use code SAVE200 for Rs. 200 off orders over Rs. 2,000!',
+];
 
 interface NavbarProps {
   onSearchChange?: (q: string) => void;
@@ -14,9 +20,15 @@ interface NavbarProps {
 export function Navbar({ onSearchChange, searchValue = '', showSearch = false }: NavbarProps) {
   const [location] = useLocation();
   const { cartCount } = useCart();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileOpen,    setMobileOpen]    = useState(false);
+  const [searchOpen,    setSearchOpen]    = useState(false);
+  const [announceIdx,   setAnnounceIdx]   = useState(0);
   const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    const timer = setInterval(() => setAnnounceIdx(i => (i + 1) % ANNOUNCEMENTS.length), 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   const navLinks = [
     { label: 'Home',        href: '/'            },
@@ -32,9 +44,14 @@ export function Navbar({ onSearchChange, searchValue = '', showSearch = false }:
 
   return (
     <header className="sticky top-0 z-50 bg-background/98 backdrop-blur-md border-b border-border shadow-sm">
-      {/* Announcement bar */}
-      <div className="bg-foreground text-background py-1.5 text-center text-[11px] font-bold uppercase tracking-widest">
-        Free Delivery on orders over Rs. {STORE_CONFIG.deliveryCharge * 10} — Cash on Delivery Available
+      {/* Announcement bar — rotating promo messages */}
+      <div className="bg-foreground text-background py-1.5 text-center text-[11px] font-bold uppercase tracking-widest overflow-hidden relative min-h-[28px] flex items-center justify-center">
+        <span
+          key={announceIdx}
+          className="animate-fade-in"
+        >
+          {ANNOUNCEMENTS[announceIdx]}
+        </span>
       </div>
 
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
