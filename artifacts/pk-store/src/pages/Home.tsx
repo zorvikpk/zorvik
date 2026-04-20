@@ -8,6 +8,7 @@ import { Navbar } from '../components/Navbar';
 import { CountdownTimer } from '../components/CountdownTimer';
 import { StoreLogo } from '../components/StoreLogo';
 import { STORE_CONFIG } from '../config';
+import { trackClickButton } from '../lib/tiktok-pixel';
 
 const categories = ["All", "Clothing", "Digital", "Beauty"];
 
@@ -76,7 +77,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-3">
                 <button
                   className="bg-primary text-primary-foreground px-7 py-3 rounded-full font-black uppercase tracking-wide hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 active:scale-[0.98]"
-                  onClick={() => setLocation('/catalog')}
+                  onClick={() => { trackClickButton('shop_now_hero'); setLocation('/catalog'); }}
                   data-testid="button-shop-now"
                 >
                   Shop Now
@@ -138,7 +139,7 @@ export default function Home() {
                 transition={{ delay: i * 0.1 }}
                 whileHover={{ y: -4, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setLocation('/catalog')}
+                onClick={() => { trackClickButton(`category_${cat.name.toLowerCase()}`); setLocation('/catalog'); }}
                 className={`relative bg-gradient-to-br ${cat.bg} text-white rounded-2xl p-6 text-left overflow-hidden group transition-all`}
                 data-testid={`category-card-${cat.name}`}
               >
@@ -196,7 +197,7 @@ export default function Home() {
           {/* View All CTA */}
           <div className="text-center mt-10">
             <button
-              onClick={() => setLocation('/catalog')}
+              onClick={() => { trackClickButton('view_all_products'); setLocation('/catalog'); }}
               className="inline-flex items-center gap-2 border-2 border-foreground text-foreground px-8 py-3 rounded-full font-black uppercase tracking-widest hover:bg-foreground hover:text-background transition-all"
               data-testid="button-view-all"
             >

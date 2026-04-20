@@ -4,7 +4,7 @@ import { ArrowLeft, Check, ShieldCheck, Truck, Clock, ShoppingBag } from 'lucide
 import { products } from '../data/products';
 import { STORE_CONFIG } from '../config';
 import { useCart } from '../hooks/use-cart';
-import { trackViewContent } from '../lib/tiktok-pixel';
+import { trackViewContent, trackAddToCart, trackContact } from '../lib/tiktok-pixel';
 import { useToast } from '../hooks/use-toast';
 import { StockIndicator, getVariantStock } from '../components/StockBadge';
 import { ReviewsSection } from '../components/ReviewsSection';
@@ -53,7 +53,7 @@ export default function ProductDetail() {
       if (product.variants?.sizes?.length) setSelectedSize(product.variants.sizes[0]);
       if (product.variants?.colors?.length) setSelectedColor(product.variants.colors[0]);
       if (product.variants?.options?.length) setSelectedOption(product.variants.options[0]);
-      trackViewContent({ id: product.id, name: product.name, price: product.price });
+      trackViewContent({ id: product.id, name: product.name, price: product.price, category: product.category });
     }
   }, [product]);
 
@@ -87,6 +87,7 @@ export default function ProductDetail() {
       ...(selectedOption ? { optionName: selectedOption.name, optionPrice: selectedOption.price } : {}),
     };
     addToCart({ product, variant, quantity });
+    trackAddToCart({ id: product.id, name: product.name, price: currentPrice, category: product.category }, quantity);
     setAddedAnimation(true);
     setTimeout(() => setAddedAnimation(false), 1200);
     toast({ title: "Added to Cart!", description: `${quantity}x ${product.name} added to your bag.` });
@@ -102,6 +103,7 @@ export default function ProductDetail() {
     const msg = encodeURIComponent(
       `Hi! I want to order:\n*${product.name}*${variant ? ` (${variant})` : ''}\nQty: ${quantity}\nPrice: Rs. ${currentPrice * quantity}\n\nPlease confirm availability. COD payment.`
     );
+    trackContact(product.id);
     window.open(`https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${msg}`, '_blank');
   };
 

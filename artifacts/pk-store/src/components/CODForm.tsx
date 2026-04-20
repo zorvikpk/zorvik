@@ -99,7 +99,12 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
   // ── Load saved customer info ─────────────────────────────────────────────────
   useEffect(() => {
     if (!open) return;
-    trackInitiateCheckout();
+    const trackItems = items.map(i => ({
+      id:       i.product.id,
+      price:    i.variant?.optionPrice ?? i.product.price,
+      quantity: i.quantity,
+    }));
+    trackInitiateCheckout(trackItems, itemTotal);
     setSuccessData(null);
     try {
       const saved = localStorage.getItem(LS_KEY);
@@ -153,7 +158,12 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
     msg += `*Payment:* Cash on Delivery\n`;
     msg += `\n_Expected delivery: ${cityInfo?.days ?? '3-5 days'}_`;
 
-    trackCompletePayment(grandTotal);
+    const trackItems = items.map(i => ({
+      id:       i.product.id,
+      price:    i.variant?.optionPrice ?? i.product.price,
+      quantity: i.quantity,
+    }));
+    trackCompletePayment(trackItems, grandTotal, orderId);
     await new Promise(r => setTimeout(r, 300));
     window.open(`https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
 
