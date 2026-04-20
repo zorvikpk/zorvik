@@ -49,11 +49,15 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 - **Products data**: `artifacts/pk-store/src/data/products.ts`
 - **Product images**: `artifacts/pk-store/public/` (tshirt.png, ebook.png, perfume.png, hero.png)
 - **Key components**: `Navbar.tsx`, `ProductCard.tsx`, `CountdownTimer.tsx`, `WhatsAppButton.tsx`, `SizeGuideModal.tsx`, `CODForm.tsx`, `InstallPrompt.tsx`, `SkeletonCard.tsx`
-- **Pages**: Home, Catalog, Contact, ProductDetail, Cart (all lazy-loaded via React.lazy + Suspense)
+- **Pages**: Home, Catalog, Contact, ProductDetail, Cart, OrderConfirmation, TrackOrder (all lazy-loaded)
 - **Hooks**: `useSeo.ts` (dynamic meta/OG/Twitter/JSON-LD per page), `use-cart.ts`
 - **PWA**: `public/manifest.json`, `public/sw.js` (cache-first images, network-first app), `public/icon-192.svg`, `public/icon-512.svg`
 - **SEO**: `public/robots.txt`, `public/sitemap.xml`, JSON-LD Product schema on ProductDetail
-- **COD Checkout** (`CODForm.tsx`): 20-city dropdown, phone auto-format (03XX-XXXXXXX), localStorage returning-customer pre-fill, free delivery >Rs. 2000, order ID generation
-- **TikTok Pixel** (`lib/tiktok-pixel.ts`): PageView, ViewContent, AddToCart, InitiateCheckout, CompletePayment, Contact (WhatsApp), ClickButton; dev-mode pink console logs
-- **Size Guide Modal** (`SizeGuideModal.tsx`): S-3XL chart with chest/length/shoulder, bottom-sheet mobile, centered desktop
-- **Performance**: `prefers-reduced-motion` CSS rules, `animate-slide-up` animation
+- **COD Checkout** (`CODForm.tsx`): 20-city dropdown, phone auto-format, localStorage returning-customer pre-fill, free delivery >Rs. 2000, saves full order + navigates to `/order-confirmation`
+- **Order Tracking** (`lib/orders.ts`): StoredOrder type, localStorage helpers (saveOrder, searchOrders, getOrderById), WhatsApp templates per status, 5-step status tracker
+- **Order Confirmation** (`pages/OrderConfirmation.tsx`): animated checkmark, Order ID + copy button, delivery estimate, vertical+horizontal status tracker (5 steps), order items, delivery details, "Track Your Order" (passes `?id=` in URL), "Need Help?" WhatsApp
+- **Track Order** (`pages/TrackOrder.tsx`): search by Order ID or phone, order card with status tracker + items + delivery info, "Need Help?" WhatsApp, collapsible "WhatsApp Message Templates" for store owner (4 status tabs: Confirmed/Shipped/Out for Delivery/Delivered, copy + send on WhatsApp)
+- **TikTok Pixel** (`lib/tiktok-pixel.ts`): PageView, ViewContent, AddToCart, InitiateCheckout, CompletePayment, Contact (WhatsApp), ClickButton
+- **Reviews** (`data/reviews.ts`, `components/ReviewsSection.tsx`): 5 reviews per product with Pakistani names, star distribution bars, photo lightbox, Write-a-Review form (WhatsApp submit), dynamic getProductRating()
+- **Size Guide Modal** (`SizeGuideModal.tsx`): S-3XL chart with chest/length/shoulder
+- **LocalStorage keys**: `sw_customer_info` (COD prefill), `sw_orders` (all orders), `sw_last_order_id` (confirmation page lookup), `sw_install_dismissed_at` (PWA)

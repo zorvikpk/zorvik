@@ -9,12 +9,14 @@ import { PageLoader } from "@/components/SkeletonCard";
 import { initPixel, trackPageView } from "@/lib/tiktok-pixel";
 
 /* ── Code-split page imports ────────────────────────────────────────────────── */
-const Home          = lazy(() => import("@/pages/Home"));
-const ProductDetail = lazy(() => import("@/pages/ProductDetail"));
-const Cart          = lazy(() => import("@/pages/Cart"));
-const Catalog       = lazy(() => import("@/pages/Catalog"));
-const Contact       = lazy(() => import("@/pages/Contact"));
-const NotFound      = lazy(() => import("@/pages/not-found"));
+const Home              = lazy(() => import("@/pages/Home"));
+const ProductDetail     = lazy(() => import("@/pages/ProductDetail"));
+const Cart              = lazy(() => import("@/pages/Cart"));
+const Catalog           = lazy(() => import("@/pages/Catalog"));
+const Contact           = lazy(() => import("@/pages/Contact"));
+const OrderConfirmation = lazy(() => import("@/pages/OrderConfirmation"));
+const TrackOrder        = lazy(() => import("@/pages/TrackOrder"));
+const NotFound          = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient();
 
@@ -35,8 +37,10 @@ function Router() {
         <Route path="/catalog"     component={Catalog} />
         <Route path="/contact"     component={Contact} />
         <Route path="/product/:id" component={ProductDetail} />
-        <Route path="/cart"        component={Cart} />
-        <Route                     component={NotFound} />
+        <Route path="/cart"               component={Cart} />
+        <Route path="/order-confirmation" component={OrderConfirmation} />
+        <Route path="/track-order"        component={TrackOrder} />
+        <Route                            component={NotFound} />
       </Switch>
     </Suspense>
   );

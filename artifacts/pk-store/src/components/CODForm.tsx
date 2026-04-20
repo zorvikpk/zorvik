@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'wouter';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { STORE_CONFIG } from '../config';
 import { trackInitiateCheckout, trackCompletePayment } from '../lib/tiktok-pixel';
 import { CartItem } from '../hooks/use-cart';
-import { CheckCircle, ChevronDown, Clock, Truck, StickyNote, User, Phone, MapPin, X } from 'lucide-react';
+import { saveOrder, setLastOrderId } from '../lib/orders';
+import { ChevronDown, Clock, Truck, StickyNote, User, Phone, MapPin, X } from 'lucide-react';
 
 // ─── Cities with delivery estimates ────────────────────────────────────────────
 const CITIES: { name: string; days: string }[] = [
@@ -72,10 +74,10 @@ interface CODFormProps {
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormProps) {
-  const [isSubmitting, setIsSubmitting]     = useState(false);
-  const [successData, setSuccessData]       = useState<{ orderId: string; name: string } | null>(null);
-  const [notesOpen, setNotesOpen]           = useState(false);
-  const [isReturning, setIsReturning]       = useState(false);
+  const [, setLocation]   = useLocation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notesOpen, setNotesOpen]       = useState(false);
+  const [isReturning, setIsReturning]   = useState(false);
 
   // ── Price calculations ───────────────────────────────────────────────────────
   const itemTotal = items.reduce((sum, item) => {
@@ -105,7 +107,6 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
       quantity: i.quantity,
     }));
     trackInitiateCheckout(trackItems, itemTotal);
-    setSuccessData(null);
     try {
       const saved = localStorage.getItem(LS_KEY);
       if (saved) {
@@ -167,45 +168,40 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormPr
     await new Promise(r => setTimeout(r, 300));
     window.open(`https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
 
-    setIsSubmitting(false);
-    setSuccessData({ orderId, name: data.fullName });
-  };
+    // Persist full order in localStorage for tracking
+    saveOrder({
+      orderId,
+      name:     data.fullName,
+      phone:    rawPhone,
+      city:     cityDisplay,
+      address:  data.address,
+      items:    items.map(item => ({
+        productId:    item.product.id,
+        productName:  item.product.name,
+        productImage: item.product.image,
+        price:        item.variant?.optionPrice ?? item.product.price,
+        quantity:     item.quantity,
+        variant:      item.variant ? {
+          size:       item.variant.size,
+          color:      item.variant.color,
+          optionName: item.variant.optionName,
+        } : undefined,
+      })),
+      subtotal:          itemTotal,
+      deliveryCharge,
+      grandTotal,
+      status:            'placed',
+      createdAt:         new Date().toISOString(),
+      estimatedDelivery: cityInfo?.days ?? '3-5 days',
+      notes:             data.notes?.trim() || undefined,
+    });
+    setLastOrderId(orderId);
 
-  // ── Success screen ───────────────────────────────────────────────────────────
-  if (successData) {
-    return (
-      <Dialog open={open} onOpenChange={v => { onOpenChange(v); if (!v) onOrderSuccess(); }}>
-        <DialogContent className="sm:max-w-[420px] bg-card text-card-foreground p-0 overflow-hidden">
-          <div className="flex flex-col items-center text-center p-8">
-            <div className="w-20 h-20 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center mb-5">
-              <CheckCircle size={42} />
-            </div>
-            <h2 className="text-2xl font-black mb-1">Order Placed!</h2>
-            <p className="text-muted-foreground text-sm mb-2">
-              Thank you, <span className="font-bold text-foreground">{successData.name}</span>!
-            </p>
-            <div className="bg-muted rounded-lg px-5 py-3 mb-5 w-full">
-              <p className="text-xs text-muted-foreground mb-0.5">Order ID</p>
-              <p className="font-black text-xl tracking-widest">{successData.orderId}</p>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              WhatsApp par aapka order confirm ho raha hai. Hamara team jald contact karega.
-            </p>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2.5 rounded-full">
-              <Truck size={14} className="text-primary" />
-              <span>Delivery: {cityInfo?.days ?? '3-5 days'}</span>
-            </div>
-            <button
-              className="mt-6 w-full bg-foreground text-background h-11 rounded-full font-black uppercase tracking-widest text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-              onClick={() => { onOpenChange(false); onOrderSuccess(); }}
-            >
-              Continue Shopping
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+    setIsSubmitting(false);
+    onOrderSuccess();        // clear cart
+    onOpenChange(false);     // close dialog
+    setLocation('/order-confirmation'); // navigate to full page
+  };
 
   // ── Main form ────────────────────────────────────────────────────────────────
   return (

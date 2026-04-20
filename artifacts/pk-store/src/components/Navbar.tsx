@@ -19,9 +19,10 @@ export function Navbar({ onSearchChange, searchValue = '', showSearch = false }:
   const [, setLocation] = useLocation();
 
   const navLinks = [
-    { label: 'Home', href: '/' },
-    { label: 'Catalog', href: '/catalog' },
-    { label: 'Contact', href: '/contact' },
+    { label: 'Home',        href: '/'            },
+    { label: 'Catalog',     href: '/catalog'     },
+    { label: 'Track Order', href: '/track-order' },
+    { label: 'Contact',     href: '/contact'     },
   ];
 
   const isActive = (href: string) => {
