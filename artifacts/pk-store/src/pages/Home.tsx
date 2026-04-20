@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Truck, ShieldCheck, Tag, ArrowRight } from 'lucide-react';
+import { Truck, ShieldCheck, Tag, ArrowRight, RotateCcw, Shirt, Monitor, Sparkles } from 'lucide-react';
 import { useProducts } from '../hooks/use-products';
 import { ProductCard } from '../components/ProductCard';
 import { Navbar } from '../components/Navbar';
@@ -12,35 +11,39 @@ import { trackClickButton } from '../lib/tiktok-pixel';
 import { useSeo } from '../hooks/useSeo';
 import { RecentlyViewed } from '../components/RecentlyViewed';
 
-const categories = ["All", "Clothing", "Digital", "Beauty"];
+const categories = ['All', 'Clothing', 'Digital', 'Beauty'];
 
 const categoryCards = [
   {
-    name: "Clothing",
-    label: "Fashion & Apparel",
-    bg: "from-slate-800 to-slate-900",
-    emoji: "👕",
-    description: "T-shirts, hoodies & more"
+    name: 'Clothing',
+    label: 'Fashion & Apparel',
+    description: 'T-shirts, hoodies & more',
+    Icon: Shirt,
   },
   {
-    name: "Digital",
-    label: "Digital Products",
-    bg: "from-violet-700 to-purple-900",
-    emoji: "💻",
-    description: "eBooks, guides & tools"
+    name: 'Digital',
+    label: 'Digital Products',
+    description: 'eBooks, guides & tools',
+    Icon: Monitor,
   },
   {
-    name: "Beauty",
-    label: "Beauty & Fragrance",
-    bg: "from-rose-600 to-pink-900",
-    emoji: "✨",
-    description: "Perfumes & cosmetics"
+    name: 'Beauty',
+    label: 'Beauty & Fragrance',
+    description: 'Perfumes & cosmetics',
+    Icon: Sparkles,
   },
+];
+
+const trustItems = [
+  { icon: Truck,       label: 'Fast Delivery',    sub: '2-4 working days'   },
+  { icon: ShieldCheck, label: '100% Authentic',   sub: 'Quality guaranteed' },
+  { icon: Tag,         label: 'Best Prices',      sub: 'Unbeatable deals'   },
+  { icon: RotateCcw,   label: 'Easy Returns',     sub: '7-day return policy'},
 ];
 
 export default function Home() {
   const products = useProducts();
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState('All');
   const [, setLocation] = useLocation();
 
   useSeo({
@@ -50,7 +53,7 @@ export default function Home() {
   });
 
   const filteredProducts = products.filter(p =>
-    activeCategory === "All" || p.category === activeCategory
+    activeCategory === 'All' || p.category === activeCategory
   ).slice(0, 8);
 
   return (
@@ -58,135 +61,194 @@ export default function Home() {
       <Navbar />
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative w-full aspect-[16/9] md:aspect-[21/8] bg-muted overflow-hidden flex items-center">
+        {/* ── Hero Section ─────────────────────────────────────────────── */}
+        <section className="relative w-full overflow-hidden" style={{ aspectRatio: '21/8', minHeight: 280 }}>
           <img
             src="/hero.png"
             alt="Hero banner"
             className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/60 to-transparent" />
-          <div className="container mx-auto px-4 relative z-10">
-            <motion.div
-              initial={{ opacity: 0, x: -24 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className="max-w-lg"
-            >
-              <span className="inline-block py-1 px-3 bg-primary text-primary-foreground font-bold text-[11px] uppercase tracking-widest rounded-full mb-4">
+          <div
+            className="absolute inset-0"
+            style={{ backgroundColor: 'rgba(26,26,26,0.48)' }}
+          />
+          <div className="relative z-10 h-full flex items-center container mx-auto px-6">
+            <div className="max-w-lg">
+              <p
+                className="animate-fade-up text-white/70 text-[10px] font-semibold uppercase tracking-[0.18em] mb-4"
+              >
                 New Collection 2026
-              </span>
-              <h1 className="text-4xl md:text-6xl font-black leading-none mb-4">
-                {STORE_CONFIG.tagline.split(' & ')[0]} &<br />
-                <span className="text-primary">{STORE_CONFIG.tagline.split(' & ')[1]}</span>
-              </h1>
-              <p className="text-muted-foreground mb-6 max-w-sm text-sm md:text-base">
-                {STORE_CONFIG.description.slice(0, 120)}...
               </p>
-              <div className="flex flex-wrap gap-3">
+              <h1
+                className="animate-fade-up animate-fade-up-delay-1 text-white font-extrabold leading-none mb-4"
+                style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.02em' }}
+              >
+                {STORE_CONFIG.tagline.split(' & ')[0]} &<br />
+                {STORE_CONFIG.tagline.split(' & ')[1]}
+              </h1>
+              <p
+                className="animate-fade-up animate-fade-up-delay-2 text-white/75 mb-6 max-w-sm text-sm leading-relaxed"
+              >
+                {STORE_CONFIG.description.slice(0, 110)}
+              </p>
+              <div className="animate-fade-up animate-fade-up-delay-3 flex flex-wrap gap-3">
                 <button
-                  className="bg-primary text-primary-foreground px-7 py-3 rounded-full font-black uppercase tracking-wide hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 active:scale-[0.98]"
                   onClick={() => { trackClickButton('shop_now_hero'); setLocation('/catalog'); }}
+                  className="font-semibold text-sm transition-all active:scale-[0.97]"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    color: '#1A1A1A',
+                    paddingInline: 28,
+                    paddingBlock: 12,
+                    borderRadius: 6,
+                    letterSpacing: '0.04em',
+                  }}
                   data-testid="button-shop-now"
                 >
                   Shop Now
                 </button>
                 <button
-                  className="bg-background/80 backdrop-blur border border-border text-foreground px-7 py-3 rounded-full font-bold uppercase tracking-wide hover:bg-muted transition-all active:scale-[0.98]"
                   onClick={() => setLocation('/contact')}
+                  className="font-semibold text-sm text-white transition-all active:scale-[0.97]"
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: '1.5px solid rgba(255,255,255,0.55)',
+                    paddingInline: 28,
+                    paddingBlock: 12,
+                    borderRadius: 6,
+                    letterSpacing: '0.04em',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.9)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.55)')}
                   data-testid="button-contact-hero"
                 >
                   Contact Us
                 </button>
               </div>
-            </motion.div>
+            </div>
           </div>
         </section>
 
-        {/* Trust Badges */}
-        <section className="bg-card border-y border-border">
-          <div className="container mx-auto px-4 py-4 flex justify-center sm:justify-between items-center flex-wrap gap-6">
-            {[
-              { icon: Truck, label: 'Fast Delivery', sub: '2-4 working days' },
-              { icon: ShieldCheck, label: '100% Authentic', sub: 'Quality guaranteed' },
-              { icon: Tag, label: 'Best Prices', sub: 'Unbeatable deals' },
-            ].map(({ icon: Icon, label, sub }) => (
-              <div key={label} className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                  <Icon size={17} />
+        {/* ── Trust Strip ──────────────────────────────────────────────── */}
+        <section style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8E7E5' }}>
+          <div className="container mx-auto px-4">
+            <div className="flex justify-center sm:justify-between items-center flex-wrap gap-0 divide-x divide-[#E8E7E5]">
+              {trustItems.map(({ icon: Icon, label, sub }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-3 px-6 py-4 flex-1 min-w-[180px]"
+                >
+                  <Icon size={18} strokeWidth={1.5} className="text-muted-foreground flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-[13px] text-foreground leading-none">{label}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: '#A8A7A5' }}>{sub}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-sm leading-none">{label}</p>
-                  <p className="text-muted-foreground text-xs mt-0.5">{sub}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Shop by Category */}
-        <section className="container mx-auto px-4 py-12">
-          <div className="flex items-center justify-between mb-6">
+        {/* ── Shop by Category ─────────────────────────────────────────── */}
+        <section className="container mx-auto px-4 py-14">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Shop by Category</h2>
-              <div className="w-10 h-1 bg-primary mt-2" />
+              <p
+                className="text-[10px] font-semibold uppercase tracking-[0.16em] mb-2"
+                style={{ color: '#A8A7A5' }}
+              >
+                Browse
+              </p>
+              <h2
+                className="text-2xl md:text-3xl font-extrabold text-foreground"
+                style={{ letterSpacing: '-0.02em' }}
+              >
+                Shop by Category
+              </h2>
             </div>
             <button
               onClick={() => setLocation('/catalog')}
-              className="text-primary font-bold text-sm flex items-center gap-1 hover:underline"
+              className="hidden sm:flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              style={{ textUnderlineOffset: 3 }}
             >
-              View All <ArrowRight size={14} />
+              View All <ArrowRight size={14} strokeWidth={1.5} />
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {categoryCards.map((cat, i) => (
-              <motion.button
+            {categoryCards.map((cat) => (
+              <button
                 key={cat.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -4, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => { trackClickButton(`category_${cat.name.toLowerCase()}`); setLocation('/catalog'); }}
-                className={`relative bg-gradient-to-br ${cat.bg} text-white rounded-2xl p-6 text-left overflow-hidden group transition-all`}
+                className="group relative text-left overflow-hidden transition-all duration-300"
+                style={{
+                  backgroundColor: '#1A1A1A',
+                  borderRadius: 8,
+                  padding: '2rem 1.75rem',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#2A2A2A')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1A1A1A')}
                 data-testid={`category-card-${cat.name}`}
               >
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
-                <div className="relative z-10">
-                  <span className="text-4xl block mb-3">{cat.emoji}</span>
-                  <h3 className="font-black text-xl leading-tight mb-1">{cat.name}</h3>
-                  <p className="text-white/70 text-sm">{cat.description}</p>
-                  <div className="mt-4 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-white/90">
-                    Shop Now <ArrowRight size={12} />
-                  </div>
+                <cat.Icon
+                  size={28}
+                  strokeWidth={1.25}
+                  className="text-white/40 mb-4 transition-colors group-hover:text-white/60"
+                />
+                <p className="text-white/50 text-[10px] uppercase tracking-[0.14em] font-medium mb-1.5">
+                  {cat.label}
+                </p>
+                <h3
+                  className="text-white font-bold text-xl mb-1"
+                  style={{ letterSpacing: '-0.01em' }}
+                >
+                  {cat.name}
+                </h3>
+                <p className="text-white/55 text-sm mb-5">{cat.description}</p>
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-white/70 uppercase tracking-wider group-hover:text-white transition-colors">
+                  Shop <ArrowRight size={12} strokeWidth={2} />
                 </div>
-              </motion.button>
+              </button>
             ))}
           </div>
         </section>
 
-        {/* Products Section */}
+        {/* ── Products Section ──────────────────────────────────────────── */}
         <section id="products" className="container mx-auto px-4 pb-16">
           <CountdownTimer />
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight">Trending Now</h2>
-              <div className="w-10 h-1 bg-primary mt-2" />
+              <p
+                className="text-[10px] font-semibold uppercase tracking-[0.16em] mb-2"
+                style={{ color: '#A8A7A5' }}
+              >
+                Featured
+              </p>
+              <h2
+                className="text-2xl md:text-3xl font-extrabold text-foreground"
+                style={{ letterSpacing: '-0.02em' }}
+              >
+                Trending Now
+              </h2>
             </div>
 
-            {/* Category Filter pills */}
             <div className="flex overflow-x-auto no-scrollbar gap-2 w-full md:w-auto pb-1 md:pb-0">
               {categories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${
-                    activeCategory === cat
-                      ? 'bg-foreground text-background'
-                      : 'bg-card border border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                  }`}
+                  className="whitespace-nowrap text-sm font-medium transition-all"
+                  style={{
+                    paddingInline: 16,
+                    paddingBlock: 7,
+                    borderRadius: 6,
+                    border: activeCategory === cat
+                      ? '1.5px solid #1A1A1A'
+                      : '1.5px solid #E8E7E5',
+                    backgroundColor: activeCategory === cat ? '#1A1A1A' : 'transparent',
+                    color: activeCategory === cat ? '#FFFFFF' : '#71706E',
+                  }}
                   data-testid={`filter-category-${cat}`}
                 >
                   {cat}
@@ -195,63 +257,102 @@ export default function Home() {
             </div>
           </div>
 
-          <AnimatePresence>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </AnimatePresence>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            {filteredProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
 
-          {/* View All CTA */}
-          <div className="text-center mt-10">
+          <div className="text-center mt-12">
             <button
               onClick={() => { trackClickButton('view_all_products'); setLocation('/catalog'); }}
-              className="inline-flex items-center gap-2 border-2 border-foreground text-foreground px-8 py-3 rounded-full font-black uppercase tracking-widest hover:bg-foreground hover:text-background transition-all"
+              className="inline-flex items-center gap-2 text-sm font-semibold transition-all active:scale-[0.97]"
+              style={{
+                border: '1.5px solid #1A1A1A',
+                color: '#1A1A1A',
+                paddingInline: 32,
+                paddingBlock: 12,
+                borderRadius: 6,
+                letterSpacing: '0.04em',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1A1A1A';
+                (e.currentTarget as HTMLButtonElement).style.color = '#FFFFFF';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+                (e.currentTarget as HTMLButtonElement).style.color = '#1A1A1A';
+              }}
               data-testid="button-view-all"
             >
-              View All Products <ArrowRight size={16} />
+              View All Products <ArrowRight size={15} strokeWidth={1.5} />
             </button>
           </div>
         </section>
 
-        {/* Recently Viewed — only if user has history */}
+        {/* ── Recently Viewed ───────────────────────────────────────────── */}
         <section className="container mx-auto px-4 pb-4">
           <RecentlyViewed maxItems={6} />
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-card border-t border-border py-10">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+      {/* ── Footer ───────────────────────────────────────────────────────── */}
+      <footer style={{ backgroundColor: '#1A1A1A' }}>
+        <div className="container mx-auto px-6 py-14">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 mb-10">
             <div>
-              <div className="mb-3">
-                <StoreLogo size="md" />
+              <div className="mb-4">
+                <span
+                  className="font-extrabold text-xl text-white select-none"
+                  style={{ letterSpacing: '-0.02em' }}
+                >
+                  SmartWear
+                </span>
               </div>
-              <p className="text-muted-foreground text-sm leading-relaxed">
+              <p className="text-sm leading-relaxed" style={{ color: '#71706E' }}>
                 {STORE_CONFIG.tagline}. COD available nationwide.
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-sm uppercase tracking-wider mb-3">Quick Links</h4>
-              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                <button onClick={() => setLocation('/')} className="text-left hover:text-primary transition-colors">Home</button>
-                <button onClick={() => setLocation('/catalog')} className="text-left hover:text-primary transition-colors">Catalog</button>
-                <button onClick={() => setLocation('/contact')} className="text-left hover:text-primary transition-colors">Contact</button>
-                <button onClick={() => setLocation('/return-policy')} className="text-left hover:text-primary transition-colors">Return Policy</button>
+              <h4
+                className="text-white font-semibold text-[11px] uppercase tracking-[0.14em] mb-4"
+              >
+                Quick Links
+              </h4>
+              <div className="flex flex-col gap-2.5 text-sm" style={{ color: '#71706E' }}>
+                {[
+                  { label: 'Home',          href: '/'              },
+                  { label: 'Catalog',       href: '/catalog'       },
+                  { label: 'Contact',       href: '/contact'       },
+                  { label: 'Return Policy', href: '/return-policy' },
+                ].map(({ label, href }) => (
+                  <button
+                    key={href}
+                    onClick={() => setLocation(href)}
+                    className="text-left transition-colors hover:text-white"
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
             <div>
-              <h4 className="font-bold text-sm uppercase tracking-wider mb-3">Contact</h4>
-              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+              <h4
+                className="text-white font-semibold text-[11px] uppercase tracking-[0.14em] mb-4"
+              >
+                Contact
+              </h4>
+              <div className="flex flex-col gap-2.5 text-sm" style={{ color: '#71706E' }}>
                 <span>WhatsApp: +92 300 1234567</span>
                 <span>Mon–Sat: 9am – 9pm</span>
                 <span>Cash on Delivery</span>
               </div>
             </div>
           </div>
-          <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
+          <div
+            className="pt-8 text-center text-xs"
+            style={{ borderTop: '1px solid #2A2A2A', color: '#71706E' }}
+          >
             {STORE_CONFIG.copyright}. All rights reserved.
           </div>
         </div>

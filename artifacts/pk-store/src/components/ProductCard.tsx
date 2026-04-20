@@ -1,6 +1,5 @@
 import { Link } from 'wouter';
 import { Product } from '../data/products';
-import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
 import { StockBadge, getProductMinStock, isProductSoldOut } from './StockBadge';
 import { getProductRating } from '../data/reviews';
@@ -14,7 +13,15 @@ function StarRatingSmall({ rating }: { rating: number }) {
   return (
     <div className="flex gap-0.5 items-center">
       {[1, 2, 3, 4, 5].map(i => (
-        <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill={i <= rating ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" className={i <= rating ? 'text-amber-400' : 'text-muted-foreground/20'}>
+        <svg
+          key={i}
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill={i <= rating ? '#1A1A1A' : 'none'}
+          stroke={i <= rating ? '#1A1A1A' : '#D5D4D2'}
+          strokeWidth="2"
+        >
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
       ))}
@@ -34,102 +41,182 @@ export function ProductCard({ product }: ProductCardProps) {
   const { isWishlisted, toggle } = useWishlist();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={soldOut ? {} : { y: -4 }}
-      transition={{ duration: 0.3 }}
-      className={`group relative flex flex-col bg-card border border-card-border rounded-xl overflow-hidden shadow-sm hover:shadow-md ${soldOut ? 'opacity-60' : ''}`}
+    <div
+      className={`group relative flex flex-col bg-card overflow-hidden transition-all duration-300 ${soldOut ? 'opacity-60' : 'hover:-translate-y-1.5'}`}
+      style={{
+        border: '1px solid #F0EFED',
+        borderRadius: 8,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+        transition: 'transform 0.28s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.28s cubic-bezier(0.25,0.1,0.25,1)',
+      }}
+      onMouseEnter={e => {
+        if (!soldOut) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.10)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)';
+      }}
       data-testid={`card-product-${product.id}`}
     >
-      <div className="block relative aspect-square overflow-hidden bg-muted">
+      {/* Image area — 3:4 ratio */}
+      <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: '3/4' }}>
         <Link href={`/product/${product.id}`} className="absolute inset-0 z-0" />
 
-        {/* Sale badge */}
+        {/* Sale badge — top left */}
         {discount > 0 && !soldOut && (
-          <div className="absolute top-2 left-2 z-10 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-md">
-            Save {discount}%
+          <div
+            className="absolute top-2 left-2 z-10 text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider"
+            style={{ backgroundColor: '#C4362A', borderRadius: 4 }}
+          >
+            -{discount}%
           </div>
         )}
 
-        {/* Low Stock badge — left side, below sale badge */}
+        {/* Low Stock badge — top left, below sale */}
         {isLowStock && (
-          <div className="absolute top-9 left-2 z-10 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide stock-pulse">
-            🔥 Low Stock
+          <div
+            className="absolute z-10 text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider stock-pulse"
+            style={{
+              top: discount > 0 ? 28 : 8,
+              left: 8,
+              backgroundColor: '#71706E',
+              borderRadius: 4,
+            }}
+          >
+            Low Stock
           </div>
         )}
 
-        {/* Wishlist heart button — top right */}
-        <motion.button
+        {/* Wishlist button — top right */}
+        <button
           onClick={e => { e.preventDefault(); toggle(product.id); }}
-          whileTap={{ scale: 1.35 }}
-          className="absolute top-2 right-2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm border border-border/30 hover:bg-background transition-colors"
+          className="absolute top-2 right-2 z-20 w-8 h-8 flex items-center justify-center transition-opacity"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.88)',
+            borderRadius: '50%',
+            border: '1px solid rgba(232,231,229,0.8)',
+            backdropFilter: 'blur(4px)',
+          }}
           aria-label={isWishlisted(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
           data-testid={`btn-wishlist-${product.id}`}
         >
           <Heart
-            size={15}
-            className={isWishlisted(product.id) ? 'text-rose-500 fill-rose-500' : 'text-muted-foreground'}
+            size={14}
+            strokeWidth={1.5}
+            style={{
+              fill: isWishlisted(product.id) ? '#1A1A1A' : 'none',
+              color: isWishlisted(product.id) ? '#1A1A1A' : '#71706E',
+            }}
           />
-        </motion.button>
+        </button>
 
         {/* Sold Out overlay */}
         {soldOut && (
-          <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-[2px] flex items-center justify-center">
-            <span className="bg-foreground text-background text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full">
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(247,246,243,0.72)' }}
+          >
+            <span
+              className="text-[11px] font-bold uppercase tracking-widest px-4 py-2"
+              style={{
+                backgroundColor: '#1A1A1A',
+                color: '#FFFFFF',
+                borderRadius: 4,
+              }}
+            >
               Sold Out
             </span>
           </div>
         )}
 
-        {/* Category pill */}
-        <div className="absolute bottom-2 left-2 z-10 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-          {product.category}
-        </div>
-
         <img
           src={product.image}
           alt={product.name}
-          className={`w-full h-full object-cover transition-transform duration-500 ${soldOut ? '' : 'group-hover:scale-105'}`}
+          className={`w-full h-full object-cover transition-transform duration-500 ${soldOut ? '' : 'group-hover:scale-104'}`}
+          style={{ transition: 'transform 0.5s cubic-bezier(0.25,0.1,0.25,1)' }}
           loading="lazy"
         />
+
+        {/* Quick-add CTA — desktop: reveal on hover; mobile: always visible */}
+        {!soldOut && (
+          <Link
+            href={`/product/${product.id}`}
+            className="absolute bottom-0 left-0 right-0 z-10 text-center text-[12px] font-semibold py-2.5 transition-all duration-200 md:translate-y-full md:opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
+            style={{
+              backgroundColor: '#1A1A1A',
+              color: '#FFFFFF',
+              letterSpacing: '0.04em',
+            }}
+            data-testid={`button-order-${product.id}`}
+          >
+            View Product
+          </Link>
+        )}
       </div>
 
-      <div className="p-4 flex flex-col flex-grow">
-        <Link href={`/product/${product.id}`} className="hover:underline">
-          <h3 className="font-bold text-base leading-tight text-foreground line-clamp-2">{product.name}</h3>
+      {/* Info area */}
+      <div className="p-3 flex flex-col gap-1.5">
+        {/* Overline — category */}
+        <p
+          className="text-[10px] font-semibold uppercase tracking-widest"
+          style={{ color: '#A8A7A5' }}
+        >
+          {product.category}
+        </p>
+
+        {/* Product name */}
+        <Link href={`/product/${product.id}`}>
+          <h3
+            className="text-sm font-semibold leading-snug line-clamp-2 text-foreground hover:underline"
+            style={{ textUnderlineOffset: 3 }}
+          >
+            {product.name}
+          </h3>
         </Link>
 
+        {/* Stars */}
         {rating && (
-          <div className="flex items-center gap-1.5 mt-1.5">
+          <div className="flex items-center gap-1.5">
             <StarRatingSmall rating={Math.round(rating.avg)} />
-            <span className="text-xs text-muted-foreground">({rating.count})</span>
+            <span className="text-[10px]" style={{ color: '#A8A7A5' }}>({rating.count})</span>
           </div>
         )}
 
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-xl font-black text-primary">Rs. {product.price}</span>
+        {/* Price row */}
+        <div className="flex items-baseline gap-2">
+          <span className="text-base font-bold text-foreground" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            Rs. {product.price}
+          </span>
           {product.compareAtPrice && (
-            <span className="text-sm text-muted-foreground line-through">Rs. {product.compareAtPrice}</span>
+            <span
+              className="text-xs line-through"
+              style={{ color: '#A8A7A5', fontVariantNumeric: 'tabular-nums' }}
+            >
+              Rs. {product.compareAtPrice}
+            </span>
           )}
         </div>
 
-        <div className="mt-2 mb-3">
+        {/* Stock badge */}
+        <div className="mb-1">
           <StockBadge productId={product.id} />
         </div>
 
+        {/* CTA visible on mobile, hidden on desktop (shown in hover overlay above) */}
         <Link
           href={`/product/${product.id}`}
-          className={`mt-auto w-full font-semibold py-3 rounded-lg text-center transition-colors ${
-            soldOut
-              ? 'bg-muted text-muted-foreground cursor-not-allowed'
-              : 'bg-foreground text-background hover:bg-primary hover:text-primary-foreground'
-          }`}
-          data-testid={`button-order-${product.id}`}
+          className="md:hidden w-full text-center py-2.5 text-[12px] font-semibold transition-colors"
+          style={{
+            backgroundColor: soldOut ? '#EEEDEB' : '#1A1A1A',
+            color: soldOut ? '#A8A7A5' : '#FFFFFF',
+            borderRadius: 6,
+            letterSpacing: '0.04em',
+            pointerEvents: soldOut ? 'none' : 'auto',
+          }}
+          data-testid={`button-order-mobile-${product.id}`}
         >
-          {soldOut ? 'Sold Out' : 'Order Now'}
+          {soldOut ? 'Sold Out' : 'View Product'}
         </Link>
       </div>
-    </motion.div>
+    </div>
   );
 }
