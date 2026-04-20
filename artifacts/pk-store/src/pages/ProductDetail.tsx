@@ -10,6 +10,7 @@ import { StockBadge, getProductStock } from '../components/StockBadge';
 import { ReviewsSection } from '../components/ReviewsSection';
 import { RelatedProducts } from '../components/RelatedProducts';
 import { CODForm } from '../components/CODForm';
+import { ProductImageGallery } from '../components/ProductImageGallery';
 
 function StarRatingDisplay({ rating, count }: { rating: number; count: number }) {
   return (
@@ -128,21 +129,14 @@ export default function ProductDetail() {
       </header>
 
       <main className="flex-1 max-w-6xl mx-auto w-full md:py-8 flex flex-col md:flex-row gap-8 lg:gap-16">
-        {/* Product Image */}
+        {/* Product Image Gallery */}
         <div className="w-full md:w-1/2 md:max-w-md flex-shrink-0">
-          <div className="aspect-square bg-muted relative md:rounded-2xl overflow-hidden">
-            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-            {discount > 0 && (
-              <div className="absolute top-4 left-4 z-10 bg-destructive text-destructive-foreground px-3 py-1.5 rounded-lg font-black text-sm tracking-wider uppercase shadow-lg transform -rotate-2">
-                Sale {discount}% Off
-              </div>
-            )}
-            {stock <= 5 && (
-              <div className="absolute top-4 right-4 z-10 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wide animate-pulse">
-                Low Stock
-              </div>
-            )}
-          </div>
+          <ProductImageGallery
+            images={product.images && product.images.length > 0 ? product.images : [product.image]}
+            productName={product.name}
+            discount={discount > 0 ? discount : undefined}
+            isLowStock={stock <= 5}
+          />
         </div>
 
         {/* Product Info */}
