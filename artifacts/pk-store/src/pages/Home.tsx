@@ -10,6 +10,7 @@ import { StoreLogo } from '../components/StoreLogo';
 import { STORE_CONFIG } from '../config';
 import { trackClickButton } from '../lib/tiktok-pixel';
 import { useSeo } from '../hooks/useSeo';
+import { RecentlyViewed } from '../components/RecentlyViewed';
 
 const categories = ["All", "Clothing", "Digital", "Beauty"];
 
@@ -211,6 +212,11 @@ export default function Home() {
               View All Products <ArrowRight size={16} />
             </button>
           </div>
+        </section>
+
+        {/* Recently Viewed — only if user has history */}
+        <section className="container mx-auto px-4 pb-4">
+          <RecentlyViewed maxItems={6} />
         </section>
       </main>
 

@@ -11,6 +11,8 @@ import { useToast } from '../hooks/use-toast';
 import { StockIndicator, getVariantStock, isProductSoldOut } from '../components/StockBadge';
 import { ReviewsSection } from '../components/ReviewsSection';
 import { RelatedProducts } from '../components/RelatedProducts';
+import { RecentlyViewed } from '../components/RecentlyViewed';
+import { useRecentlyViewed } from '../hooks/use-recently-viewed';
 import { CODForm } from '../components/CODForm';
 import { ProductImageGallery } from '../components/ProductImageGallery';
 import { SizeGuideModal } from '../components/SizeGuideModal';
@@ -37,6 +39,7 @@ export default function ProductDetail() {
   const [, setLocation] = useLocation();
   const { addToCart, cartCount } = useCart();
   const { isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const { trackView } = useRecentlyViewed();
   const { toast } = useToast();
 
   const product = products.find(p => p.id === params?.id);
@@ -55,6 +58,7 @@ export default function ProductDetail() {
       if (product.variants?.colors?.length) setSelectedColor(product.variants.colors[0]);
       if (product.variants?.options?.length) setSelectedOption(product.variants.options[0]);
       trackViewContent({ id: product.id, name: product.name, price: product.price, category: product.category });
+      trackView(product.id);
     }
   }, [product]);
 
@@ -366,10 +370,15 @@ export default function ProductDetail() {
         </div>
       </main>
 
-      {/* Reviews + Related — full width */}
+      {/* Reviews + Related + Recently Viewed — full width */}
       <div className="max-w-6xl mx-auto w-full px-4 pb-8">
         <ReviewsSection productId={product.id} productName={product.name} />
         <RelatedProducts currentProductId={product.id} category={product.category} />
+        <RecentlyViewed
+          title="You Recently Viewed"
+          excludeId={product.id}
+          maxItems={6}
+        />
       </div>
 
       {/* Fixed Mobile CTA */}

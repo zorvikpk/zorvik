@@ -8,6 +8,7 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import { PageLoader } from "@/components/SkeletonCard";
 import { initPixel, trackPageView } from "@/lib/tiktok-pixel";
 import { WishlistProvider } from "@/hooks/use-wishlist";
+import { RecentlyViewedProvider } from "@/hooks/use-recently-viewed";
 
 /* ── Code-split page imports ────────────────────────────────────────────────── */
 const Home              = lazy(() => import("@/pages/Home"));
@@ -57,6 +58,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <WishlistProvider>
+        <RecentlyViewedProvider>
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <RouteTracker />
@@ -66,6 +68,7 @@ function App() {
           <InstallPrompt />
           <Toaster />
         </TooltipProvider>
+        </RecentlyViewedProvider>
       </WishlistProvider>
     </QueryClientProvider>
   );

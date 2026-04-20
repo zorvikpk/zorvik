@@ -5,6 +5,7 @@ import { useCart } from '../hooks/use-cart';
 import { STORE_CONFIG } from '../config';
 import { CODForm } from '../components/CODForm';
 import { CouponInput, type AppliedCoupon } from '../components/CouponInput';
+import { RecentlyViewed } from '../components/RecentlyViewed';
 
 export default function Cart() {
   const [, setLocation] = useLocation();
@@ -58,7 +59,7 @@ export default function Cart() {
           </button>
           <span className="font-bold flex-1 text-center pr-8">Your Cart (0)</span>
         </header>
-        <div className="flex flex-col items-center justify-center py-20 flex-1 text-center px-4">
+        <div className="flex flex-col items-center justify-center py-16 text-center px-4">
           <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center text-muted-foreground mb-6">
             <ShoppingBag size={32} />
           </div>
@@ -70,6 +71,10 @@ export default function Cart() {
           >
             Start Shopping
           </button>
+        </div>
+        {/* Recently viewed picks for empty cart */}
+        <div className="max-w-2xl mx-auto w-full px-4 pb-10">
+          <RecentlyViewed title="Continue Shopping" maxItems={6} />
         </div>
       </div>
     );
@@ -234,6 +239,11 @@ export default function Cart() {
           </div>
         </div>
       </main>
+
+      {/* Continue Shopping — recently viewed suggestions */}
+      <div className="max-w-2xl mx-auto w-full px-4 pb-6">
+        <RecentlyViewed title="Continue Shopping" maxItems={6} />
+      </div>
 
       <CODForm
         open={isCODOpen}
