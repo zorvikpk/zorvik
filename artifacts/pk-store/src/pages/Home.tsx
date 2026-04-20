@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ShoppingBag, Zap, Truck, ShieldCheck, Tag } from 'lucide-react';
@@ -6,6 +6,7 @@ import { products } from '../data/products';
 import { ProductCard } from '../components/ProductCard';
 import { Input } from '../components/ui/input';
 import { useCart } from '../hooks/use-cart';
+import { CountdownTimer } from '../components/CountdownTimer';
 
 const categories = ["All", "Clothing", "Digital", "Beauty"];
 
@@ -87,7 +88,7 @@ export default function Home() {
         {!searchQuery && activeCategory === "All" && (
           <section className="relative w-full aspect-[16/9] md:aspect-[21/9] bg-muted overflow-hidden flex items-center">
             <img 
-              src="/src/assets/hero.png" 
+              src="/hero.png" 
               alt="Hero banner" 
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -147,6 +148,9 @@ export default function Home() {
 
         {/* Products Section */}
         <section id="products" className="container mx-auto px-4 py-12">
+          {!searchQuery && activeCategory === "All" && (
+            <CountdownTimer />
+          )}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
             <div>
               <h2 className="text-3xl font-black uppercase tracking-tight">Trending Now</h2>
