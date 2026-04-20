@@ -223,7 +223,7 @@ export default function Contact() {
 
       <footer className="bg-card border-t border-border py-6 mt-8">
         <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} PK Store. All rights reserved.
+          © 2026 SmartWear. All rights reserved.
         </div>
       </footer>
     </div>

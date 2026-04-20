@@ -3,6 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { ShoppingBag, Search, Menu, X } from 'lucide-react';
 import { useCart } from '../hooks/use-cart';
 import { STORE_CONFIG } from '../config';
+import { StoreLogo } from './StoreLogo';
 
 interface NavbarProps {
   onSearchChange?: (q: string) => void;
@@ -37,8 +38,8 @@ export function Navbar({ onSearchChange, searchValue = '', showSearch = false }:
 
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link href="/" className="font-black text-2xl tracking-tighter uppercase flex-shrink-0">
-          PK<span className="text-primary">STORE</span>
+        <Link href="/" className="flex-shrink-0">
+          <StoreLogo />
         </Link>
 
         {/* Desktop Nav */}

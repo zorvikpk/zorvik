@@ -6,6 +6,8 @@ import { products } from '../data/products';
 import { ProductCard } from '../components/ProductCard';
 import { Navbar } from '../components/Navbar';
 import { CountdownTimer } from '../components/CountdownTimer';
+import { StoreLogo } from '../components/StoreLogo';
+import { STORE_CONFIG } from '../config';
 
 const categories = ["All", "Clothing", "Digital", "Beauty"];
 
@@ -65,11 +67,11 @@ export default function Home() {
                 New Collection 2026
               </span>
               <h1 className="text-4xl md:text-6xl font-black leading-none mb-4">
-                Premium Quality.<br />
-                <span className="text-primary">Unbeatable</span> Price.
+                {STORE_CONFIG.tagline.split(' & ')[0]} &<br />
+                <span className="text-primary">{STORE_CONFIG.tagline.split(' & ')[1]}</span>
               </h1>
               <p className="text-muted-foreground mb-6 max-w-sm text-sm md:text-base">
-                Curated premium products delivered to your doorstep. Cash on Delivery available across Pakistan.
+                {STORE_CONFIG.description.slice(0, 120)}...
               </p>
               <div className="flex flex-wrap gap-3">
                 <button
@@ -209,11 +211,11 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
             <div>
-              <div className="font-black text-2xl tracking-tighter uppercase mb-3">
-                PK<span className="text-primary">STORE</span>
+              <div className="mb-3">
+                <StoreLogo size="md" />
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Premium products delivered across Pakistan. COD available nationwide.
+                {STORE_CONFIG.tagline}. COD available nationwide.
               </p>
             </div>
             <div>
@@ -234,7 +236,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} PK Store. All rights reserved.
+            {STORE_CONFIG.copyright}. All rights reserved.
           </div>
         </div>
       </footer>
