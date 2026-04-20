@@ -1,31 +1,68 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage 
-} from './ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
-} from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { STORE_CONFIG } from '../config';
 import { trackInitiateCheckout, trackCompletePayment } from '../lib/tiktok-pixel';
 import { CartItem } from '../hooks/use-cart';
+import { CheckCircle, ChevronDown, Clock, Truck, StickyNote, User, Phone, MapPin, X } from 'lucide-react';
 
-const phoneRegex = /^(03|923)\d{9}$/;
+// ─── Cities with delivery estimates ────────────────────────────────────────────
+const CITIES: { name: string; days: string }[] = [
+  { name: 'Lahore',          days: '1-2 days' },
+  { name: 'Islamabad',       days: '1-2 days' },
+  { name: 'Rawalpindi',      days: '1-2 days' },
+  { name: 'Karachi',         days: '2-3 days' },
+  { name: 'Faisalabad',      days: '2-3 days' },
+  { name: 'Multan',          days: '2-3 days' },
+  { name: 'Peshawar',        days: '2-3 days' },
+  { name: 'Gujranwala',      days: '2-3 days' },
+  { name: 'Sialkot',         days: '2-3 days' },
+  { name: 'Hyderabad',       days: '2-3 days' },
+  { name: 'Sargodha',        days: '2-3 days' },
+  { name: 'Sahiwal',         days: '2-3 days' },
+  { name: 'Bahawalpur',      days: '3-4 days' },
+  { name: 'Sukkur',          days: '3-4 days' },
+  { name: 'Mardan',          days: '3-4 days' },
+  { name: 'Abbottabad',      days: '3-4 days' },
+  { name: 'Jhang',           days: '3-4 days' },
+  { name: 'Quetta',          days: '3-5 days' },
+  { name: 'Larkana',         days: '3-5 days' },
+  { name: 'Dera Ghazi Khan', days: '3-5 days' },
+  { name: 'Other',           days: '3-5 days' },
+];
 
-const codFormSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  phone: z.string().regex(phoneRegex, "Must be a valid Pakistani number starting with 03 or 923 (11 digits)"),
-  address: z.string().min(10, "Please provide complete street address"),
-  city: z.string().min(2, "City is required"),
+const LS_KEY = 'sw_customer_info';
+
+function generateOrderId() {
+  const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const rand = Array.from({ length: 5 }, () => alpha[Math.floor(Math.random() * alpha.length)]).join('');
+  return `SW-2026-${rand}`;
+}
+
+function formatPhoneDisplay(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 4) return digits;
+  return digits.slice(0, 4) + '-' + digits.slice(4);
+}
+
+// ─── Validation schema ─────────────────────────────────────────────────────────
+const schema = z.object({
+  fullName:  z.string().min(2, 'Name must be at least 2 characters'),
+  phone:     z.string().refine(v => /^03\d{9}$/.test(v.replace(/\D/g, '')), 'Enter valid number: 03XXXXXXXXX'),
+  city:      z.string().min(1, 'Please select a city'),
+  cityOther: z.string().optional(),
+  address:   z.string().min(5, 'Please enter your complete address'),
+  notes:     z.string().optional(),
 });
+type FormValues = z.infer<typeof schema>;
 
-type CODFormValues = z.infer<typeof codFormSchema>;
-
+// ─── Props ─────────────────────────────────────────────────────────────────────
 interface CODFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,176 +70,402 @@ interface CODFormProps {
   onOrderSuccess: () => void;
 }
 
+// ─── Component ─────────────────────────────────────────────────────────────────
 export function CODForm({ open, onOpenChange, items, onOrderSuccess }: CODFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting]     = useState(false);
+  const [successData, setSuccessData]       = useState<{ orderId: string; name: string } | null>(null);
+  const [notesOpen, setNotesOpen]           = useState(false);
+  const [isReturning, setIsReturning]       = useState(false);
 
-  const form = useForm<CODFormValues>({
-    resolver: zodResolver(codFormSchema),
-    defaultValues: {
-      fullName: "",
-      phone: "",
-      address: "",
-      city: "",
-    },
+  // ── Price calculations ───────────────────────────────────────────────────────
+  const itemTotal = items.reduce((sum, item) => {
+    const price = item.variant?.optionPrice ?? item.product.price;
+    return sum + price * item.quantity;
+  }, 0);
+  const freeDelivery     = itemTotal >= 2000;
+  const deliveryCharge   = freeDelivery ? 0 : STORE_CONFIG.deliveryCharge;
+  const grandTotal       = itemTotal + deliveryCharge;
+
+  // ── Form setup ──────────────────────────────────────────────────────────────
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { fullName: '', phone: '', city: '', cityOther: '', address: '', notes: '' },
   });
 
+  const selectedCity = form.watch('city');
+  const cityInfo     = CITIES.find(c => c.name === selectedCity);
+  const isOtherCity  = selectedCity === 'Other';
+
+  // ── Load saved customer info ─────────────────────────────────────────────────
   useEffect(() => {
-    if (open && items.length > 0) {
-      trackInitiateCheckout();
-    }
-  }, [open, items]);
+    if (!open) return;
+    trackInitiateCheckout();
+    setSuccessData(null);
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        const info = JSON.parse(saved) as Partial<FormValues>;
+        form.reset({
+          fullName:  info.fullName  || '',
+          phone:     info.phone     || '',
+          city:      info.city      || '',
+          cityOther: info.cityOther || '',
+          address:   info.address   || '',
+          notes:     '',
+        });
+        if (info.fullName) setIsReturning(true);
+      } else {
+        form.reset({ fullName: '', phone: '', city: '', cityOther: '', address: '', notes: '' });
+        setIsReturning(false);
+      }
+    } catch { /* ignore */ }
+  }, [open]);
 
-  const itemTotal = items.reduce((total, item) => {
-    const price = item.variant?.optionPrice ?? item.product.price;
-    return total + price * item.quantity;
-  }, 0);
-  const grandTotal = itemTotal + STORE_CONFIG.deliveryCharge;
-
-  const onSubmit = async (data: CODFormValues) => {
+  // ── Submit ───────────────────────────────────────────────────────────────────
+  const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-    
-    // Generate order text for WhatsApp
-    let orderText = `*New Order - ${STORE_CONFIG.storeName}*\n\n`;
-    orderText += `*Customer:* ${data.fullName}\n`;
-    orderText += `*Phone:* ${data.phone}\n`;
-    orderText += `*Address:* ${data.address}, ${data.city}\n\n`;
-    
-    orderText += `*Items:*\n`;
-    items.forEach((item, idx) => {
+    const orderId     = generateOrderId();
+    const rawPhone    = data.phone.replace(/\D/g, '');
+    const cityDisplay = isOtherCity && data.cityOther ? data.cityOther : data.city;
+
+    // Save to localStorage (without notes for privacy)
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      fullName: data.fullName, phone: data.phone, city: data.city, cityOther: data.cityOther, address: data.address,
+    }));
+
+    // Build WhatsApp message
+    let msg = `*New Order — ${STORE_CONFIG.storeName}*\n`;
+    msg += `*Order ID:* ${orderId}\n\n`;
+    msg += `*Customer:* ${data.fullName}\n`;
+    msg += `*Phone:* ${rawPhone}\n`;
+    msg += `*City:* ${cityDisplay}\n`;
+    msg += `*Address:* ${data.address}\n`;
+    if (data.notes?.trim()) msg += `*Notes:* ${data.notes.trim()}\n`;
+    msg += `\n*Items:*\n`;
+    items.forEach((item, i) => {
       const price = item.variant?.optionPrice ?? item.product.price;
-      const variantText = [];
-      if (item.variant?.size) variantText.push(item.variant.size);
-      if (item.variant?.color) variantText.push(item.variant.color);
-      if (item.variant?.optionName) variantText.push(item.variant.optionName);
-      
-      const variantStr = variantText.length > 0 ? ` (${variantText.join(', ')})` : '';
-      orderText += `${idx + 1}. ${item.product.name}${variantStr} x${item.quantity} - Rs. ${price * item.quantity}\n`;
+      const parts = [item.variant?.size, item.variant?.color, item.variant?.optionName].filter(Boolean);
+      msg += `${i + 1}. ${item.product.name}${parts.length ? ` (${parts.join(', ')})` : ''} × ${item.quantity} — Rs. ${price * item.quantity}\n`;
     });
-    
-    orderText += `\n*Subtotal:* Rs. ${itemTotal}\n`;
-    orderText += `*Delivery:* Rs. ${STORE_CONFIG.deliveryCharge}\n`;
-    orderText += `*Total:* Rs. ${grandTotal}\n`;
-    orderText += `*Payment Method:* Cash on Delivery\n`;
-    
-    // Track complete payment (since COD is essentially "payment committed" for conversion tracking)
+    msg += `\n*Subtotal:* Rs. ${itemTotal}\n`;
+    msg += `*Delivery:* ${freeDelivery ? 'FREE' : `Rs. ${deliveryCharge}`}\n`;
+    msg += `*Total:* Rs. ${grandTotal}\n`;
+    msg += `*Payment:* Cash on Delivery\n`;
+    msg += `\n_Expected delivery: ${cityInfo?.days ?? '3-5 days'}_`;
+
     trackCompletePayment(grandTotal);
-    
-    // Wait a brief moment to let tracking fire
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Open WhatsApp
-    const message = encodeURIComponent(orderText);
-    window.open(`https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${message}`, '_blank');
-    
+    await new Promise(r => setTimeout(r, 300));
+    window.open(`https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+
     setIsSubmitting(false);
-    onOpenChange(false);
-    onOrderSuccess();
+    setSuccessData({ orderId, name: data.fullName });
   };
 
+  // ── Success screen ───────────────────────────────────────────────────────────
+  if (successData) {
+    return (
+      <Dialog open={open} onOpenChange={v => { onOpenChange(v); if (!v) onOrderSuccess(); }}>
+        <DialogContent className="sm:max-w-[420px] bg-card text-card-foreground p-0 overflow-hidden">
+          <div className="flex flex-col items-center text-center p-8">
+            <div className="w-20 h-20 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center mb-5">
+              <CheckCircle size={42} />
+            </div>
+            <h2 className="text-2xl font-black mb-1">Order Placed!</h2>
+            <p className="text-muted-foreground text-sm mb-2">
+              Thank you, <span className="font-bold text-foreground">{successData.name}</span>!
+            </p>
+            <div className="bg-muted rounded-lg px-5 py-3 mb-5 w-full">
+              <p className="text-xs text-muted-foreground mb-0.5">Order ID</p>
+              <p className="font-black text-xl tracking-widest">{successData.orderId}</p>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              WhatsApp par aapka order confirm ho raha hai. Hamara team jald contact karega.
+            </p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2.5 rounded-full">
+              <Truck size={14} className="text-primary" />
+              <span>Delivery: {cityInfo?.days ?? '3-5 days'}</span>
+            </div>
+            <button
+              className="mt-6 w-full bg-foreground text-background h-11 rounded-full font-black uppercase tracking-widest text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+              onClick={() => { onOpenChange(false); onOrderSuccess(); }}
+            >
+              Continue Shopping
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ── Main form ────────────────────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground p-0 overflow-hidden max-h-[90vh] flex flex-col">
-        <DialogHeader className="p-6 pb-2 bg-muted/30">
-          <DialogTitle className="text-xl font-bold">Complete Your Order</DialogTitle>
-          <DialogDescription>
-            Pay with Cash on Delivery anywhere in Pakistan.
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[460px] bg-card text-card-foreground p-0 overflow-hidden max-h-[92dvh] flex flex-col gap-0">
+        {/* Header */}
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-black uppercase tracking-wide">Complete Order</DialogTitle>
+            <button onClick={() => onOpenChange(false)} className="p-1.5 hover:bg-muted rounded-full transition-colors">
+              <X size={18} className="text-muted-foreground" />
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">Cash on Delivery — Pay when delivered</p>
+
+          {/* Welcome back banner */}
+          {isReturning && (
+            <div className="mt-2 bg-primary/10 text-primary text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2">
+              <User size={12} />
+              Welcome back, {form.watch('fullName') || 'there'}! Your details are pre-filled.
+            </div>
+          )}
         </DialogHeader>
-        
-        <div className="overflow-y-auto p-6 pt-2 pb-0 flex-grow">
-          <div className="bg-muted/50 rounded-lg p-4 mb-6">
-            <h4 className="font-semibold text-sm mb-2">Order Summary ({items.length} items)</h4>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>Rs. {itemTotal}</span>
+
+        <div className="overflow-y-auto flex-1">
+          {/* ── Order Summary Card ───────────────────────────────────────── */}
+          <div className="mx-4 mt-4 bg-muted/40 border border-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-border/50">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Order Summary · {items.length} {items.length === 1 ? 'item' : 'items'}
+              </p>
             </div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted-foreground">Delivery</span>
-              <span>Rs. {STORE_CONFIG.deliveryCharge}</span>
+            <div className="px-4 py-2 space-y-2.5 max-h-36 overflow-y-auto">
+              {items.map((item, i) => {
+                const price = item.variant?.optionPrice ?? item.product.price;
+                const parts = [item.variant?.size, item.variant?.color, item.variant?.optionName].filter(Boolean);
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden flex-shrink-0 border border-border">
+                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm leading-tight truncate">{item.product.name}</p>
+                      {parts.length > 0 && (
+                        <p className="text-[11px] text-muted-foreground">{parts.join(' · ')} · Qty {item.quantity}</p>
+                      )}
+                      {parts.length === 0 && (
+                        <p className="text-[11px] text-muted-foreground">Qty: {item.quantity}</p>
+                      )}
+                    </div>
+                    <span className="font-black text-sm text-primary flex-shrink-0">Rs. {price * item.quantity}</span>
+                  </div>
+                );
+              })}
             </div>
-            <div className="flex justify-between font-bold border-t border-border pt-2 mt-2">
-              <span>Total</span>
-              <span className="text-primary">Rs. {grandTotal}</span>
+
+            {/* Totals */}
+            <div className="px-4 py-3 border-t border-border/50 space-y-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Subtotal</span>
+                <span>Rs. {itemTotal}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Truck size={11} /> Delivery
+                </span>
+                {freeDelivery
+                  ? <span className="text-green-600 dark:text-green-400 font-bold">FREE</span>
+                  : <span>Rs. {deliveryCharge}</span>
+                }
+              </div>
+              {freeDelivery && (
+                <p className="text-[10px] text-green-600 dark:text-green-400">
+                  Free delivery on orders above Rs. 2,000
+                </p>
+              )}
+              <div className="flex justify-between font-black text-base pt-1.5 border-t border-border">
+                <span>Total</span>
+                <span className="text-primary">Rs. {grandTotal}</span>
+              </div>
             </div>
           </div>
 
+          {/* ── Form ─────────────────────────────────────────────────────── */}
           <Form {...form}>
-            <form id="cod-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-6">
+            <form id="cod-form" onSubmit={form.handleSubmit(onSubmit)} className="px-4 py-4 space-y-3.5 pb-2">
+
+              {/* Full Name */}
               <FormField
                 control={form.control}
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <User size={11} /> Full Name *
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ali Khan" {...field} data-testid="input-fullname" />
+                      <Input placeholder="Ali Khan" autoComplete="name" {...field} data-testid="input-fullname" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
-              
+
+              {/* Phone */}
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>WhatsApp / Phone Number</FormLabel>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <Phone size={11} /> Phone Number *
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="03001234567" type="tel" {...field} data-testid="input-phone" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Street Address</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="House 123, Street 4, Block 5..." 
-                        className="resize-none" 
-                        {...field} 
-                        data-testid="input-address"
+                      <Input
+                        placeholder="03XX-XXXXXXX"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        value={field.value}
+                        onChange={e => {
+                          const formatted = formatPhoneDisplay(e.target.value);
+                          field.onChange(formatted);
+                        }}
+                        data-testid="input-phone"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
-              
+
+              {/* City dropdown */}
               <FormField
                 control={form.control}
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>City</FormLabel>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <MapPin size={11} /> City *
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Lahore" {...field} data-testid="input-city" />
+                      <div className="relative">
+                        <select
+                          {...field}
+                          className="w-full h-10 px-3 pr-8 bg-background border border-input rounded-md text-sm appearance-none outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                          data-testid="select-city"
+                        >
+                          <option value="">— Select your city —</option>
+                          {CITIES.map(c => (
+                            <option key={c.name} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                      </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
+
+              {/* "Other" city text input */}
+              {isOtherCity && (
+                <FormField
+                  control={form.control}
+                  name="cityOther"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Enter your city name" {...field} data-testid="input-city-other" />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Delivery estimate pill */}
+              {cityInfo && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
+                  <Clock size={12} className="text-primary flex-shrink-0" />
+                  <span>
+                    Estimated delivery to <strong className="text-foreground">{selectedCity}</strong>:{' '}
+                    <span className="text-primary font-bold">{cityInfo.days}</span>
+                  </span>
+                </div>
+              )}
+
+              {/* Address */}
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wider">Full Address *</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="House #, Street, Block, Area..."
+                        rows={2}
+                        className="resize-none text-sm"
+                        autoComplete="street-address"
+                        {...field}
+                        data-testid="input-address"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Notes — collapsed by default */}
+              {!notesOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setNotesOpen(true)}
+                  className="flex items-center gap-1.5 text-xs text-primary font-bold hover:underline"
+                >
+                  <StickyNote size={11} />
+                  Add delivery notes (optional)
+                </button>
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <StickyNote size={11} /> Delivery Notes (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Gate code, landmark, special instructions..."
+                          rows={2}
+                          className="resize-none text-sm"
+                          {...field}
+                          data-testid="input-notes"
+                          autoFocus
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
+
             </form>
           </Form>
         </div>
-        
-        <DialogFooter className="p-6 pt-4 bg-muted/30 mt-auto">
-          <Button 
-            type="submit" 
-            form="cod-form" 
-            className="w-full text-lg h-12 font-bold" 
+
+        {/* ── Submit Button ─────────────────────────────────────────────────── */}
+        <div className="px-4 pb-5 pt-3 border-t border-border bg-card flex-shrink-0">
+          <Button
+            type="submit"
+            form="cod-form"
+            className="w-full h-13 text-base font-black uppercase tracking-wider shadow-lg shadow-primary/20"
             disabled={isSubmitting || items.length === 0}
             data-testid="button-submit-order"
           >
-            {isSubmitting ? "Processing..." : `Place Order - Rs. ${grandTotal}`}
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-primary-foreground/40 border-t-primary-foreground rounded-full animate-spin" />
+                Processing...
+              </span>
+            ) : (
+              `Place Order — Rs. ${grandTotal}`
+            )}
           </Button>
-        </DialogFooter>
+          <p className="text-center text-[10px] text-muted-foreground mt-2">
+            Pay on delivery — no payment needed now
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );
