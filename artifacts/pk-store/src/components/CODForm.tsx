@@ -14,7 +14,10 @@ import { CartItem } from '../hooks/use-cart';
 import { saveOrder, setLastOrderId } from '../lib/orders';
 import { applyCouponUsage } from '../data/coupons';
 import { type AppliedCoupon } from './CouponInput';
-import { ChevronDown, Clock, Truck, StickyNote, User, Phone, MapPin, X, Tag } from 'lucide-react';
+import { ChevronDown, Clock, Truck, StickyNote, User, Phone, MapPin, X, Tag, CreditCard, Banknote, Upload, Copy, Check as CheckIcon } from 'lucide-react';
+
+type PaymentMethod = 'cod' | 'online';
+type OnlineMethod  = 'jazzcash' | 'easypaisa' | 'bank';
 
 // ─── Cities with delivery estimates ────────────────────────────────────────────
 const CITIES: { name: string; days: string }[] = [
@@ -81,6 +84,17 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess, appliedCoup
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notesOpen, setNotesOpen]       = useState(false);
   const [isReturning, setIsReturning]   = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod');
+  const [onlineMethod,  setOnlineMethod]  = useState<OnlineMethod>('jazzcash');
+  const [transactionId, setTransactionId] = useState('');
+  const [screenshotName, setScreenshotName] = useState('');
+  const [copiedNumber, setCopiedNumber]   = useState(false);
+
+  function copyNumber(num: string) {
+    navigator.clipboard.writeText(num.replace(/-/g, '')).catch(() => {});
+    setCopiedNumber(true);
+    setTimeout(() => setCopiedNumber(false), 2000);
+  }
 
   // ── Price calculations ───────────────────────────────────────────────────────
   const itemTotal = items.reduce((sum, item) => {
@@ -169,8 +183,15 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess, appliedCoup
     }
     msg += `*Delivery:* ${effectiveDelivery === 0 ? 'FREE' : `Rs. ${effectiveDelivery}`}\n`;
     msg += `*Total:* Rs. ${grandTotal}\n`;
-    msg += `*Payment:* Cash on Delivery\n`;
-    msg += `\n_Expected delivery: ${cityInfo?.days ?? '3-5 days'}_`;
+    if (paymentMethod === 'cod') {
+      msg += `*Payment:* Cash on Delivery 💵\n`;
+    } else {
+      const methodLabel = onlineMethod === 'jazzcash' ? 'JazzCash 📱' : onlineMethod === 'easypaisa' ? 'Easypaisa 📱' : 'Bank Transfer 🏦';
+      msg += `*Payment:* ${methodLabel} (Online)\n`;
+      if (transactionId.trim()) msg += `*Transaction ID:* ${transactionId.trim()}\n`;
+      if (screenshotName) msg += `*Screenshot:* ${screenshotName} (attached separately)\n`;
+    }
+    msg += `\n_Expected delivery: ${paymentMethod === 'online' ? 'Within 24 hours (online payment)' : cityInfo?.days ?? '3-5 days'}_`;
 
     const trackItems = items.map(i => ({
       id:       i.product.id,
@@ -233,7 +254,9 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess, appliedCoup
               <X size={18} className="text-muted-foreground" />
             </button>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">Cash on Delivery — Pay when delivered</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {paymentMethod === 'cod' ? 'Cash on Delivery — Pay when delivered' : 'Online Payment — Verified & Shipped Faster ⚡'}
+          </p>
 
           {/* Welcome back banner */}
           {isReturning && (
@@ -319,7 +342,191 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess, appliedCoup
                   You're saving Rs. {appliedCoupon.discount}! 🎉
                 </p>
               )}
+              {/* Payment method row in summary */}
+              <div className="flex justify-between text-xs pt-1 text-muted-foreground">
+                <span>Payment</span>
+                <span className="font-bold text-foreground">
+                  {paymentMethod === 'cod' ? '💵 Cash on Delivery' :
+                    onlineMethod === 'jazzcash' ? '📱 JazzCash' :
+                    onlineMethod === 'easypaisa' ? '📱 Easypaisa' : '🏦 Bank Transfer'}
+                </span>
+              </div>
+              {paymentMethod === 'online' && transactionId.trim() && (
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Transaction ID</span>
+                  <span className="font-mono font-bold text-foreground truncate max-w-[120px]">{transactionId.trim()}</span>
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* ── Payment Method Selection ──────────────────────────────── */}
+          <div className="mx-4 mt-4 space-y-3">
+            <p className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <CreditCard size={12} /> Select Payment Method
+            </p>
+
+            {/* COD / Online Cards */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('cod')}
+                data-testid="button-payment-cod"
+                className={`relative flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-all text-left
+                  ${paymentMethod === 'cod'
+                    ? 'border-primary bg-primary/8 shadow-sm shadow-primary/10'
+                    : 'border-border hover:border-primary/40 bg-muted/30'
+                  }`}
+              >
+                <span className="text-2xl">💵</span>
+                <div>
+                  <p className="font-black text-xs">Cash on Delivery</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Pay when you receive</p>
+                </div>
+                {paymentMethod === 'cod' && <CheckIcon size={14} className="text-primary absolute top-2 right-2" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('online')}
+                data-testid="button-payment-online"
+                className={`relative flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition-all text-left
+                  ${paymentMethod === 'online'
+                    ? 'border-emerald-500 bg-emerald-500/8 shadow-sm shadow-emerald-500/10'
+                    : 'border-border hover:border-emerald-500/40 bg-muted/30'
+                  }`}
+              >
+                <span className="text-2xl">📱</span>
+                <div>
+                  <p className="font-black text-xs">Online Payment</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">JazzCash / Easypaisa</p>
+                </div>
+                {paymentMethod === 'online' && <CheckIcon size={14} className="text-emerald-500 absolute top-2 right-2" />}
+              </button>
+            </div>
+
+            {/* Online Payment Panel */}
+            {paymentMethod === 'online' && (
+              <div className="space-y-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+
+                {/* Sub-method tabs */}
+                <div className="flex gap-2">
+                  {([
+                    { key: 'jazzcash',  label: 'JazzCash',  abbr: 'JC', bg: 'bg-[#F15A22]' },
+                    { key: 'easypaisa', label: 'Easypaisa', abbr: 'EP', bg: 'bg-[#16A34A]' },
+                    { key: 'bank',      label: 'Bank',      abbr: '🏦', bg: 'bg-blue-600' },
+                  ] as const).map(m => (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() => setOnlineMethod(m.key)}
+                      data-testid={`button-online-${m.key}`}
+                      className={`flex items-center gap-2 flex-1 px-3 py-2 rounded-xl border-2 text-xs font-bold transition-all
+                        ${onlineMethod === m.key
+                          ? 'border-emerald-500 bg-card shadow-sm'
+                          : 'border-border bg-muted/30 text-muted-foreground hover:border-emerald-500/30'
+                        }`}
+                    >
+                      <span className={`w-6 h-6 ${m.bg} rounded-full flex items-center justify-center text-white text-[9px] font-black flex-shrink-0`}>
+                        {m.abbr}
+                      </span>
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* JazzCash / Easypaisa details */}
+                {(onlineMethod === 'jazzcash' || onlineMethod === 'easypaisa') && (
+                  <div className="bg-card border border-border rounded-xl p-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground font-medium">
+                          {onlineMethod === 'jazzcash' ? '📱 JazzCash Number' : '📱 Easypaisa Number'}
+                        </p>
+                        <p className="text-sm font-black tracking-wider">
+                          {onlineMethod === 'jazzcash' ? STORE_CONFIG.payment.jazzCashNumber : STORE_CONFIG.payment.easypaisaNumber}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">Account: {STORE_CONFIG.payment.accountTitle}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyNumber(onlineMethod === 'jazzcash' ? STORE_CONFIG.payment.jazzCashNumber : STORE_CONFIG.payment.easypaisaNumber)}
+                        className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                        title="Copy number"
+                      >
+                        {copiedNumber ? <CheckIcon size={14} className="text-emerald-500" /> : <Copy size={14} className="text-muted-foreground" />}
+                      </button>
+                    </div>
+                    <div className="bg-primary/8 border border-primary/20 rounded-lg px-3 py-2 text-xs font-bold text-primary">
+                      Send Rs. {grandTotal.toLocaleString()} → {STORE_CONFIG.payment.accountTitle}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bank Transfer details */}
+                {onlineMethod === 'bank' && (
+                  <div className="bg-card border border-border rounded-xl p-3 space-y-2">
+                    {[
+                      { label: 'Bank Name',      value: STORE_CONFIG.payment.bankName },
+                      { label: 'Account Title',  value: STORE_CONFIG.payment.bankAccountTitle },
+                      { label: 'Account Number', value: STORE_CONFIG.payment.bankAccountNumber },
+                      { label: 'IBAN',           value: STORE_CONFIG.payment.bankIBAN },
+                    ].map(row => (
+                      <div key={row.label} className="flex justify-between items-center">
+                        <span className="text-[10px] text-muted-foreground">{row.label}</span>
+                        <span className="text-xs font-black font-mono">{row.value}</span>
+                      </div>
+                    ))}
+                    <div className="mt-1 bg-primary/8 border border-primary/20 rounded-lg px-3 py-2 text-xs font-bold text-primary">
+                      Transfer Rs. {grandTotal.toLocaleString()} → {STORE_CONFIG.payment.bankAccountTitle}
+                    </div>
+                  </div>
+                )}
+
+                {/* Transaction ID */}
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                    Transaction ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={transactionId}
+                    onChange={e => setTransactionId(e.target.value)}
+                    placeholder="Enter your transaction / reference ID"
+                    data-testid="input-transaction-id"
+                    className="w-full h-9 px-3 bg-background border border-input rounded-md text-sm outline-none focus:ring-2 focus:ring-ring font-mono"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    After sending payment, enter the transaction ID above
+                  </p>
+                </div>
+
+                {/* Screenshot Upload (display only) */}
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                    Payment Screenshot (optional)
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer h-9 px-3 border border-dashed border-border rounded-md hover:border-primary/50 transition-colors bg-muted/30">
+                    <Upload size={13} className="text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm text-muted-foreground truncate">
+                      {screenshotName || 'Click to choose screenshot'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      data-testid="input-screenshot"
+                      onChange={e => setScreenshotName(e.target.files?.[0]?.name || '')}
+                    />
+                  </label>
+                </div>
+
+                {/* Speed note */}
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  ⚡ Online payment orders are shipped within 24 hours! COD orders may take 1-2 extra days for verification.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── Form ─────────────────────────────────────────────────────── */}
@@ -502,11 +709,15 @@ export function CODForm({ open, onOpenChange, items, onOrderSuccess, appliedCoup
                 Processing...
               </span>
             ) : (
-              `Place Order — Rs. ${grandTotal}`
+              paymentMethod === 'cod'
+              ? `Place Order — Rs. ${grandTotal}`
+              : `Confirm Order — Rs. ${grandTotal}`
             )}
           </Button>
           <p className="text-center text-[10px] text-muted-foreground mt-2">
-            Pay on delivery — no payment needed now
+            {paymentMethod === 'cod'
+              ? 'Pay on delivery — no payment needed now'
+              : 'Your order will be confirmed after payment verification'}
           </p>
         </div>
       </DialogContent>

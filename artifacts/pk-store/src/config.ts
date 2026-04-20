@@ -8,4 +8,13 @@ export const STORE_CONFIG = {
   currency: "PKR",
   copyright: "© 2026 SmartWear",
   adminPassword: "smartwear2024",
+  payment: {
+    jazzCashNumber:    "0300-1234567",
+    easypaisaNumber:   "0300-1234567",
+    accountTitle:      "SmartWear",
+    bankName:          "Meezan Bank",
+    bankAccountTitle:  "SmartWear",
+    bankAccountNumber: "01234567890123",
+    bankIBAN:          "PK36MEZN0001234567890123",
+  },
 };
