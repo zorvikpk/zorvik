@@ -31,7 +31,7 @@ export default function Wishlist() {
       (p, i) => `${i + 1}. *${p.name}* — Rs. ${p.price}\n   ${window.location.origin}/product/${p.id}`
     ).join('\n\n');
     const msg = encodeURIComponent(
-      `Check out my SmartWear wishlist! 🛍️\n\n${lines}\n\nShop here: ${window.location.origin}`
+      `Check out my Zorvik wishlist! 🛍️\n\n${lines}\n\nShop here: ${window.location.origin}`
     );
     window.open(`https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${msg}`, '_blank');
   };

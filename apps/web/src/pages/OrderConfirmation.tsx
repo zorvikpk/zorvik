@@ -122,7 +122,7 @@ function StatusTracker({ status }: { status: OrderStatus }) {
 
 /* ── Main Page ───────────────────────────────────────────────────────────── */
 export default function OrderConfirmation() {
-  useSeo({ title: 'Order Confirmed — SmartWear' });
+  useSeo({ title: 'Order Confirmed — Zorvik' });
 
   const [, setLocation] = useLocation();
   const [, params] = useRoute('/order-confirmation/:id');

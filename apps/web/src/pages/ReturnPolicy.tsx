@@ -74,8 +74,8 @@ export default function ReturnPolicy() {
   const [, setLocation] = useLocation();
 
   useSeo({
-    title: 'Return & Exchange Policy — SmartWear',
-    description: '7-day easy returns, quick exchanges, and hassle-free refunds on all SmartWear orders.',
+    title: 'Return & Exchange Policy — Zorvik',
+    description: '7-day easy returns, quick exchanges, and hassle-free refunds on all Zorvik orders.',
   });
 
   const whatsappHref = `https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${encodeURIComponent('Hi! I need help with a return/exchange. My Order ID is: ')}`;

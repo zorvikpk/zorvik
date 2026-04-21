@@ -1,5 +1,5 @@
-/* SmartWear Service Worker v1 */
-const CACHE = 'smartwear-v1';
+/* Zorvik Service Worker v1 */
+const CACHE = 'zorvik-v1';
 const SHELL = ['/', '/manifest.json', '/favicon.svg'];
 
 /* ── Install: pre-cache shell ─────────────────────────────────────────────── */

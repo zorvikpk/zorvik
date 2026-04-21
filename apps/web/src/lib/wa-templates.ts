@@ -23,21 +23,32 @@ export type TemplateVars = {
   store_name: string;
 };
 
-const LS_KEY = 'sw_wa_templates';
+const LS_KEY = 'zorvik_wa_templates';
+const LS_KEY_LEGACY = 'sw_wa_templates';
+
+function migrateLegacyWaTemplates(): void {
+  try {
+    if (!localStorage.getItem(LS_KEY) && localStorage.getItem(LS_KEY_LEGACY)) {
+      localStorage.setItem(LS_KEY, localStorage.getItem(LS_KEY_LEGACY)!);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 export const SAMPLE_VARS: TemplateVars = {
   customer_name:     'Ahmed Khan',
-  order_id:          'SW-2026-DEMO1',
+  order_id:          'ZVK-2026-DEMO1',
   product_name:      'Band T-Shirt (Black, M)',
   total:             '2,999',
   delivery_estimate: '2-3 business days',
   tracking_number:   'TRK98765432',
   delivery_date:     'April 25, 2026',
-  tracking_url:      typeof window !== 'undefined' ? `${window.location.origin}/track-order?id=SW-2026-DEMO1` : 'https://smartwear.pk/track-order',
-  review_url:        typeof window !== 'undefined' ? `${window.location.origin}/` : 'https://smartwear.pk/',
+  tracking_url:      typeof window !== 'undefined' ? `${window.location.origin}/track-order?id=ZVK-2026-DEMO1` : 'https://zorvik.pk/track-order',
+  review_url:        typeof window !== 'undefined' ? `${window.location.origin}/` : 'https://zorvik.pk/',
   price:             '2,999',
-  store_url:         typeof window !== 'undefined' ? window.location.origin : 'https://smartwear.pk',
-  store_name:        'SmartWear',
+  store_url:         typeof window !== 'undefined' ? window.location.origin : 'https://zorvik.pk',
+  store_name:        'Zorvik',
 };
 
 export const DEFAULT_TEMPLATES: WaTemplate[] = [
@@ -53,7 +64,7 @@ Your order has been confirmed!
 🛍️ Product: {product_name}
 💰 Total: Rs. {total}
 🚚 Delivery: {delivery_estimate}
-We'll update you when your order ships. Thank you for shopping with SmartWear! 🛒`,
+We'll update you when your order ships. Thank you for shopping with Zorvik! 🛒`,
   },
   {
     id: 'order_shipped',
@@ -66,7 +77,7 @@ Great news — your order {order_id} has been shipped!
 🚚 Tracking: {tracking_number}
 📅 Expected delivery: {delivery_date}
 Track your order: {tracking_url}
-SmartWear — Quality You Can Trust ✨`,
+Zorvik — Quality You Can Trust ✨`,
   },
   {
     id: 'out_for_delivery',
@@ -78,7 +89,7 @@ SmartWear — Quality You Can Trust ✨`,
 Order: {order_id}
 💵 Amount: Rs. {total} (COD)
 Please keep your phone available.
-SmartWear Team`,
+Zorvik Team`,
   },
   {
     id: 'delivered_review',
@@ -89,7 +100,7 @@ SmartWear Team`,
 `✅ {customer_name}, your order {order_id} has been delivered!
 We hope you love your {product_name}!
 ⭐ Leave us a review: {review_url}
-📸 Share your photos with #SmartWear
+📸 Share your photos with #Zorvik
 Use code COMEBACK10 for 10% off your next order! 🎉`,
   },
   {
@@ -103,13 +114,14 @@ You left some amazing items in your cart!
 🛍️ {product_name} — Rs. {price}
 Complete your order now and get FREE delivery!
 Use code COMPLETE10 for 10% off: {store_url}
-SmartWear Team`,
+Zorvik Team`,
   },
 ];
 
 /* ── Persistence ─────────────────────────────────────────────────────────── */
 
 export function getTemplates(): WaTemplate[] {
+  migrateLegacyWaTemplates();
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return DEFAULT_TEMPLATES;
@@ -125,6 +137,7 @@ export function getTemplates(): WaTemplate[] {
 }
 
 export function saveTemplates(templates: WaTemplate[]): void {
+  migrateLegacyWaTemplates();
   localStorage.setItem(LS_KEY, JSON.stringify(templates));
 }
 
@@ -158,7 +171,7 @@ export function orderToVars(order: {
   const productName = [product?.productName, variantParts].filter(Boolean).join(' — ');
 
   const trackBase = typeof window !== 'undefined' ? window.location.origin : '';
-  const trackingNum = 'SWTRACK' + order.orderId.replace(/[^A-Z0-9]/g, '').slice(-6);
+  const trackingNum = 'ZVKTRACK' + order.orderId.replace(/[^A-Z0-9]/g, '').slice(-6);
 
   return {
     customer_name:     order.name,
@@ -172,6 +185,6 @@ export function orderToVars(order: {
     review_url:        `${trackBase}/`,
     price:             order.grandTotal.toLocaleString(),
     store_url:         trackBase,
-    store_name:        'SmartWear',
+    store_name:        'Zorvik',
   };
 }

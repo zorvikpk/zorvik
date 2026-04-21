@@ -46,12 +46,12 @@ const CITIES: { name: string; days: string }[] = [
   { name: 'Other',           days: '3-5 days' },
 ];
 
-const LS_KEY = 'sw_customer_info';
+const LS_KEY = 'zorvik_customer_info';
 
 function generateOrderId() {
   const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const rand = Array.from({ length: 5 }, () => alpha[Math.floor(Math.random() * alpha.length)]).join('');
-  return `SW-2026-${rand}`;
+  return `ZVK-2026-${rand}`;
 }
 
 function formatPhoneDisplay(raw: string): string {

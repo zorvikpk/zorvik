@@ -7,7 +7,7 @@
  */
 
 export interface ImportProductsInput {
-  /** Raw CSV text (Shopify format or SmartWear format) */
+  /** Raw CSV text (Shopify format or Zorvik format) */
   csv: string;
   /** Optionally assign all imported products to this collection */
   collectionId?: number | null;

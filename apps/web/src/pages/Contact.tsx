@@ -22,7 +22,7 @@ const contactSchema = z.object({
 type ContactForm = z.infer<typeof contactSchema>;
 
 export default function Contact() {
-  useSeo({ title: `Contact Us — SmartWear`, description: `Get in touch with SmartWear. Order via WhatsApp, send us a message, or visit us. Cash on Delivery across Pakistan.` });
+  useSeo({ title: `Contact Us — Zorvik`, description: `Get in touch with Zorvik. Order via WhatsApp, send us a message, or visit us. Cash on Delivery across Pakistan.` });
 
   const [submitted, setSubmitted] = useState(false);
 
@@ -226,7 +226,7 @@ export default function Contact() {
 
       <footer className="bg-card border-t border-border py-6 mt-8">
         <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
-          © 2026 SmartWear. All rights reserved.
+          © 2026 Zorvik. All rights reserved.
         </div>
       </footer>
     </div>

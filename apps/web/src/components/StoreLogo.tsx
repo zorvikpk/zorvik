@@ -8,9 +8,9 @@ export function StoreLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
     <span
       className={`${fontSize} font-extrabold tracking-tight select-none text-foreground`}
       style={{ letterSpacing: '-0.02em' }}
-      aria-label="SmartWear"
+      aria-label="Zorvik"
     >
-      SmartWear
+      Zorvik
     </span>
   );
 }

@@ -1,3 +1,5 @@
+import { getAllOrders } from '../lib/orders';
+
 /* ── Coupon types ────────────────────────────────────────────────────────── */
 export type DiscountType = 'percentage' | 'fixed' | 'free_delivery';
 
@@ -61,9 +63,21 @@ export const COUPONS: Coupon[] = [
 ];
 
 /* ── Usage tracking in localStorage ────────────────────────────────────── */
-const COUPON_USES_KEY = 'sw_coupon_uses';
+const COUPON_USES_KEY = 'zorvik_coupon_uses';
+const COUPON_USES_KEY_LEGACY = 'sw_coupon_uses';
+
+function migrateLegacyCouponUses(): void {
+  try {
+    if (!localStorage.getItem(COUPON_USES_KEY) && localStorage.getItem(COUPON_USES_KEY_LEGACY)) {
+      localStorage.setItem(COUPON_USES_KEY, localStorage.getItem(COUPON_USES_KEY_LEGACY)!);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 function getCouponUses(): Record<string, number> {
+  migrateLegacyCouponUses();
   try {
     const raw = localStorage.getItem(COUPON_USES_KEY);
     return raw ? (JSON.parse(raw) as Record<string, number>) : {};
@@ -71,6 +85,7 @@ function getCouponUses(): Record<string, number> {
 }
 
 export function applyCouponUsage(code: string): void {
+  migrateLegacyCouponUses();
   try {
     const uses = getCouponUses();
     const key  = code.toUpperCase();
@@ -115,8 +130,7 @@ export function validateCoupon(code: string, subtotal: number): ValidationResult
 
   if (coupon.first_order_only) {
     try {
-      const orders = JSON.parse(localStorage.getItem('sw_orders') ?? '[]') as unknown[];
-      if (orders.length > 0)
+      if (getAllOrders().length > 0)
         return { valid: false, error: 'This coupon is valid for first-time orders only.' };
     } catch { /* ignore */ }
   }

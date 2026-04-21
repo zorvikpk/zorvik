@@ -19,8 +19,8 @@ interface PixelSettings {
   trackSearch: boolean;
 }
 
-const STORAGE_KEY = 'sw_tiktok_pixel_settings';
-const LOG_KEY = 'sw_tiktok_pixel_debug_log';
+const STORAGE_KEY = 'zorvik_tiktok_pixel_settings';
+const LOG_KEY = 'zorvik_tiktok_pixel_debug_log';
 const MAX_LOGS = 100;
 
 const EVENT_LABELS: Record<string, string> = {

@@ -233,7 +233,7 @@ export const importProductsBodyReplaceExistingDefault = false;
 export const ImportProductsBody = zod.object({
   csv: zod
     .string()
-    .describe("Raw CSV text (Shopify format or SmartWear format)"),
+    .describe("Raw CSV text (Shopify format or Zorvik format)"),
   collectionId: zod
     .number()
     .nullish()

@@ -47,10 +47,26 @@ export const STATUS_STEPS: { key: OrderStatus; label: string; icon: string }[] =
 ];
 
 /* ── LocalStorage helpers ────────────────────────────────────────────────── */
-const ORDERS_KEY   = 'sw_orders';
-const LAST_ID_KEY  = 'sw_last_order_id';
+export const ORDERS_KEY = 'zorvik_orders';
+const LAST_ID_KEY = 'zorvik_last_order_id';
+const ORDERS_KEY_LEGACY = 'sw_orders';
+const LAST_ID_KEY_LEGACY = 'sw_last_order_id';
+
+function migrateLegacyOrderStorage(): void {
+  try {
+    if (!localStorage.getItem(ORDERS_KEY) && localStorage.getItem(ORDERS_KEY_LEGACY)) {
+      localStorage.setItem(ORDERS_KEY, localStorage.getItem(ORDERS_KEY_LEGACY)!);
+    }
+    if (!localStorage.getItem(LAST_ID_KEY) && localStorage.getItem(LAST_ID_KEY_LEGACY)) {
+      localStorage.setItem(LAST_ID_KEY, localStorage.getItem(LAST_ID_KEY_LEGACY)!);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 export function getAllOrders(): StoredOrder[] {
+  migrateLegacyOrderStorage();
   try {
     const raw = localStorage.getItem(ORDERS_KEY);
     return raw ? (JSON.parse(raw) as StoredOrder[]) : [];
@@ -85,10 +101,12 @@ export function searchOrders(query: string): StoredOrder[] {
 }
 
 export function setLastOrderId(id: string): void {
+  migrateLegacyOrderStorage();
   try { localStorage.setItem(LAST_ID_KEY, id); } catch { /* ignore */ }
 }
 
 export function getLastOrderId(): string | null {
+  migrateLegacyOrderStorage();
   try { return localStorage.getItem(LAST_ID_KEY); } catch { return null; }
 }
 
@@ -102,7 +120,7 @@ export function updateOrderStatus(orderId: string, newStatus: OrderStatus): bool
     const idx = all.findIndex(o => o.orderId === orderId);
     if (idx < 0) return false;
     all[idx] = { ...all[idx], status: newStatus };
-    localStorage.setItem('sw_orders', JSON.stringify(all));
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(all));
     return true;
   } catch { return false; }
 }
@@ -134,7 +152,7 @@ export function getWhatsAppTemplate(order: StoredOrder, forStatus: OrderStatus):
     case 'delivered':
       return (
         `✅ ${firstName}, your order *${order.orderId}* has been delivered!\n` +
-        `Thank you for shopping with SmartWear! 🛍️\n` +
+        `Thank you for shopping with Zorvik! 🛍️\n` +
         `Leave us a review: ${window.location.origin}/product/${order.items[0]?.productId ?? ''}`
       );
     default:

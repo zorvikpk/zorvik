@@ -121,7 +121,7 @@ export default function ProductDetail() {
   const productSoldOut = product ? isProductSoldOut(product.id) : false;
 
   useSeo({
-    title: product ? `${product.name} — SmartWear` : `Product — SmartWear`,
+    title: product ? `${product.name} — Zorvik` : `Product — Zorvik`,
     description: product?.description?.slice(0, 160),
     image: product?.images?.[0] ?? product?.image,
     type: product ? 'product' : 'website',
@@ -132,7 +132,7 @@ export default function ProductDetail() {
       name: product.name,
       description: product.description,
       image: product.images ?? [product.image],
-      brand: { '@type': 'Brand', name: 'SmartWear' },
+      brand: { '@type': 'Brand', name: 'Zorvik' },
       offers: {
         '@type': 'Offer',
         price: product.price,
@@ -140,7 +140,7 @@ export default function ProductDetail() {
         availability: productSoldOut
           ? 'https://schema.org/OutOfStock'
           : 'https://schema.org/InStock',
-        seller: { '@type': 'Organization', name: 'SmartWear' },
+        seller: { '@type': 'Organization', name: 'Zorvik' },
       },
     } : undefined,
   });

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Download } from 'lucide-react';
 
-const LS_KEY = 'sw_install_dismissed_at';
+const LS_KEY = 'zorvik_install_dismissed_at';
 const DISMISS_DAYS = 7;
 
 interface BeforeInstallPromptEvent extends Event {
@@ -53,13 +53,13 @@ export function InstallPrompt() {
                  bg-card border border-border rounded-2xl shadow-2xl shadow-black/40 p-4
                  flex items-center gap-3 animate-slide-up"
       role="banner"
-      aria-label="Install SmartWear app"
+      aria-label="Install Zorvik app"
     >
       <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-xl select-none">
         📱
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-black text-sm leading-tight">Install SmartWear App</p>
+        <p className="font-black text-sm leading-tight">Install Zorvik App</p>
         <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
           Best shopping experience, works offline
         </p>

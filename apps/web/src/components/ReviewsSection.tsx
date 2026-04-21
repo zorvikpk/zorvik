@@ -135,7 +135,7 @@ function WriteReviewForm({
       `👤 Name: ${name.trim()}\n` +
       `${stars} Rating: ${rating}/5\n\n` +
       `📝 Review:\n${text.trim()}\n\n` +
-      `_Submitted via SmartWear website_`
+      `_Submitted via Zorvik website_`
     );
     window.open(`https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${msg}`, '_blank');
     setSubmitted(true);

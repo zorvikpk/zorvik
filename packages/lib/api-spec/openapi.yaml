@@ -635,7 +635,7 @@ components:
       properties:
         csv:
           type: string
-          description: Raw CSV text (Shopify format or SmartWear format)
+          description: Raw CSV text (Shopify format or Zorvik format)
         collectionId:
           type: integer
           nullable: true

@@ -273,7 +273,7 @@ function OrderCard({ order }: { order: StoredOrder }) {
 
 /* ── Main TrackOrder Page ──────────────────────────────────────────────── */
 export default function TrackOrder() {
-  useSeo({ title: 'Track Your Order — SmartWear' });
+  useSeo({ title: 'Track Your Order — Zorvik' });
 
   const [query, setQuery]     = useState('');
   const [phone, setPhone]     = useState('');
@@ -363,7 +363,7 @@ export default function TrackOrder() {
               value={query}
               onChange={e => { setQuery(e.target.value); setSearched(false); }}
               onKeyDown={handleKeyDown}
-              placeholder="SW-2026-XXXXX or 03XXXXXXXXX"
+              placeholder="ZVK-2026-XXXXX or 03XXXXXXXXX"
               className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               data-testid="input-track-search"
               autoFocus
