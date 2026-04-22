@@ -64,7 +64,8 @@ async function buildAll() {
       "@azure/*",
       "@opentelemetry/*",
       "@google-cloud/*",
-      "@google/*",
+      // Do not use "@google/*" — it externalizes @google/generative-ai (Gemini) and breaks
+      // production when node resolves from apps/api without that package hoisted.
       "googleapis",
       "firebase-admin",
       "@parcel/watcher",
