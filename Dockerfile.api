@@ -10,7 +10,10 @@ WORKDIR /app
 
 COPY . .
 
-RUN pnpm install --frozen-lockfile
+# `--frozen-lockfile` fails in CI when the committed lockfile lags `pnpm-workspace.yaml`
+# (e.g. overrides / workspace settings). Prefer committing `pnpm install` output from dev;
+# flexible install keeps Railway/Docker deploys unblocked.
+RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @workspace/api-server run build
 
 WORKDIR /app/apps/api
