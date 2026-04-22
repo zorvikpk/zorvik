@@ -1,6 +1,6 @@
 # Deployment guide
 
-This monorepo uses **pnpm** workspaces. Vercel projects that use `apps/pk-store`, `apps/dashboard`, or `apps/admin` as the root directory must run installs from the **repository root** so `workspace:*` packages resolve. Each app’s `vercel.json` uses a `buildCommand` that runs `pnpm install --frozen-lockfile` at the repo root, then `pnpm build` in that app (see [§3](#vercel-pk-store)). If you override the build in the Vercel UI, set **Install** / **Build** to preserve that root install step.
+This monorepo uses **pnpm** workspaces. Vercel projects that use `apps/pk-store`, `apps/dashboard`, or `apps/admin` as the root directory must run installs from the **repository root** so `workspace:*` packages resolve. Each app’s `vercel.json` sets **`installCommand`** (`cd` to the repo root, then `pnpm install --frozen-lockfile`) and **`buildCommand`** (`pnpm run build` in that app). In the Vercel UI, **do not** override **Install** / **Build** unless you know what you are doing — leave them empty so the file is used (see [§3](#vercel-pk-store)). You need **three separate Vercel projects** (same repo, different root) for the three frontends; see [docs/deploy/VERCEL_AND_RAILWAY.md](./docs/deploy/VERCEL_AND_RAILWAY.md#vercel-one-repo-three-projects).
 
 Shorter UI-focused notes: [docs/deploy/VERCEL_AND_RAILWAY.md](./docs/deploy/VERCEL_AND_RAILWAY.md).
 

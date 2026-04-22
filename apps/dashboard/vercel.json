@@ -1,5 +1,6 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "cd ../.. && pnpm install --frozen-lockfile && cd apps/dashboard && pnpm build"
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm run build"
 }

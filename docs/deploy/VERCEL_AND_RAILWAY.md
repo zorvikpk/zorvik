@@ -1,6 +1,22 @@
 # Vercel + Railway (monorepo) — step by step
 
-This repo is a **pnpm workspace**. Vercel must install from the **repository root** so `workspace:*` packages resolve. [`apps/pk-store/vercel.json`](../../apps/pk-store/vercel.json) sets `installCommand`; for **dashboard** and **admin**, set the same install command in the Vercel project settings (see [DEPLOYMENT.md](../../DEPLOYMENT.md) §3–§5).
+This repo is a **pnpm workspace**. Vercel must install from the **repository root** so `workspace:*` packages resolve. Each app’s [`vercel.json`](../../apps/pk-store/vercel.json) (see also [`apps/admin`](../../apps/admin/vercel.json) / [`apps/dashboard`](../../apps/dashboard/vercel.json)) sets `installCommand` and `buildCommand` — in the Vercel UI, **clear any manual overrides** for Install / Build so the project uses these files (see [DEPLOYMENT.md](../../DEPLOYMENT.md) §3–§5).
+
+## One repository — three Vercel projects (not one)
+
+<a id="vercel-one-repo-three-projects"></a>
+
+Vercel treats **one project = one app = one main production URL**. A single Vercel project **cannot** deploy the storefront, dashboard, and admin as three separate sites. That is why importing with **Root directory `apps/admin`** only deploys **admin**.
+
+To have **all three** frontends on Vercel:
+
+1. **Add three Vercel projects** that all use the **same GitHub repository**, each with a different **Root directory**:
+   - `apps/pk-store`
+   - `apps/dashboard`
+   - `apps/admin`
+2. In each project: **Add New** → **Project** → import the **same** repo, then set the root folder as above. You are not forking the repo; you are linking one repo to three projects.
+3. On every **git push** to the connected branch, **each** of the three projects can run a build (unless you add an **Ignored Build Step** to skip). So all three can deploy from “one” workflow without merging them into a single Vercel project.
+4. **Do not** create a Vercel project for `apps/api` — the API stays on **Railway** (see below).
 
 ## What you will create
 
